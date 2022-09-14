@@ -23,7 +23,7 @@ import java.util.Calendar;
 import java.util.List;
 
 public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.MyViewHolder> implements Filterable {
-    
+
     Context context;
     List<List> bookList;
     RefreshEpub refreshEpub;
@@ -62,14 +62,17 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.MyViewHold
     }
 
     boolean refreshingDoneBool = false;
+
     public void refreshingDone(List<List> bookList) {
         searchedBookList = new ArrayList<>(bookList);
         refreshingDoneBool = true;
     }
+
     @Override
     public Filter getFilter() {
         return filter;
     }
+
     private Filter filter = new Filter() {
         @Override
         protected FilterResults performFiltering(CharSequence constraint) {

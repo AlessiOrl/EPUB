@@ -19,6 +19,23 @@
         <entry key="..\:/Users/lenovo/Desktop/BookPub-master/BookPub-master/src/main/res/menu/main_activity_menu.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/lenovo/Desktop/BookPub-master/BookPub-master/src/main/res/menu/main_nav_menu.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/lenovo/Desktop/BookPub-master/BookPub-master/src/main/res/xml/preferences.xml" value="0.25416666666666665" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/drawable/ic_autorenew_black_24dp.xml" value="0.2985" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/layout/activity_epub_viewer.xml" value="0.358695652173913" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/layout/activity_main.xml" value="0.358695652173913" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/layout/activity_main_settings.xml" value="0.1125" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/layout/custom_row.xml" value="0.358695652173913" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/layout/delete_book_dialog.xml" value="0.358695652173913" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/layout/edit_book_dialog.xml" value="0.358695652173913" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/layout/epub_nav_content_header.xml" value="0.358695652173913" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/layout/epub_nav_quote_header.xml" value="0.358695652173913" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/layout/main_nav_header.xml" value="0.358695652173913" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/menu/edit_book_context_menu.xml" value="0.371875" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/menu/epub_nav_content_menu.xml" value="0.371875" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/menu/epub_nav_quote_menu.xml" value="0.371875" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/menu/epub_viewer_menu.xml" value="0.371875" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/menu/main_activity_menu.xml" value="0.371875" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/menu/main_nav_menu.xml" value="0.371875" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/xml/preferences.xml" value="0.358695652173913" />
       </map>
     </option>
   </component>

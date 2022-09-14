@@ -28,6 +28,7 @@ import android.view.WindowManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
@@ -55,6 +56,7 @@ public class EpubViewer extends AppCompatActivity {
     boolean searchViewLongClick = false;
 
     SeekBar seekBar;
+    Button playpause;
     boolean seeking = false;
 
     RefreshEpub refreshEpub;
@@ -64,7 +66,7 @@ public class EpubViewer extends AppCompatActivity {
     List<String> pagesRef = new ArrayList<>();
     List<String> pages = new ArrayList<>();
     int pageNumber = 0;
-    
+
     DrawerLayout drawer;
     NavigationView navigationViewContent;
     NavigationView navigationViewQuote;
@@ -72,6 +74,7 @@ public class EpubViewer extends AppCompatActivity {
     ImageButton deleteQuotesButton;
 
     int webViewScrollAmount = 0;
+
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -127,7 +130,7 @@ public class EpubViewer extends AppCompatActivity {
             }
         });
         webView.setWebViewClient(new WebViewClient() {
-            
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 if (!sharedPreferences.getBoolean("built_in_web_browser", false) == true) {
@@ -138,11 +141,11 @@ public class EpubViewer extends AppCompatActivity {
                 }
                 return false;
             }
-            
+
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                
+
                 if (url != null && (url.startsWith("http://") || url.startsWith("https://"))) {
                     return;
                 }
@@ -178,6 +181,7 @@ public class EpubViewer extends AppCompatActivity {
                         if (pageNumber > -1) {
                             navigationViewContent.getMenu().getItem(pageNumber).setChecked(true);
                             TextView textViewPage = (TextView) findViewById(R.id.textViewPage);
+                            //navigationViewContent.getCheckedItem().toString() NOME DEL CAPITOLO
                             textViewPage.setText("Page: " + navigationViewContent.getCheckedItem().toString());
                             if (!seeking) {
                                 if (url.contains("#")) {
@@ -220,6 +224,14 @@ public class EpubViewer extends AppCompatActivity {
         seekBar = (SeekBar) findViewById(R.id.seekBar);
         seekBar.setMax(100);
         seekBar.setPadding(100, 0, 100, 0);
+        playpause = (Button) findViewById(R.id.button_playpause);
+        playpause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(context, "Playing " +  navigationViewContent.getCheckedItem() , Toast.LENGTH_LONG).show();
+                //#TODO START AUDIO PLAYER
+            }
+        });
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int progress;
 
@@ -259,7 +271,7 @@ public class EpubViewer extends AppCompatActivity {
 
         refreshEpub = MainActivity.getInstance().refreshEpub;
 
-       //Unzip and Show Epub
+        //Unzip and Show Epub
         path = getIntent().getStringExtra("path");
         bookTitle = getIntent().getStringExtra("title");
         getSupportActionBar().setTitle(bookTitle);
@@ -281,7 +293,7 @@ public class EpubViewer extends AppCompatActivity {
             finish();
             Toast.makeText(context, "Unable to open", Toast.LENGTH_LONG).show();
         }
-        
+
         //Save Quotes Get Quotes
         try {
             saveQuote.getQuotes(bookTitle);
@@ -383,6 +395,7 @@ public class EpubViewer extends AppCompatActivity {
         finish();
         return true;
     }
+
     @Override
     public void onBackPressed() {
         if (drawer.isDrawerOpen(GravityCompat.START)) {
@@ -393,6 +406,7 @@ public class EpubViewer extends AppCompatActivity {
             super.onBackPressed();
         }
     }
+
     @Override
     public void onStop() {
         try {
@@ -422,6 +436,7 @@ public class EpubViewer extends AppCompatActivity {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         }
     }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -430,11 +445,13 @@ public class EpubViewer extends AppCompatActivity {
 
     //Custom Shared Preferences
     public static final String myPref = "preferenceName";
+
     public String getFromPreferences(String key) {
         SharedPreferences sharedPreferences = getSharedPreferences(myPref, 0);
         String str = sharedPreferences.getString(key, "null");
         return str;
     }
+
     public void setToPreferences(String key, String thePreference) {
         SharedPreferences.Editor editor = getSharedPreferences(myPref, 0).edit();
         editor.putString(key, thePreference);
@@ -500,6 +517,7 @@ public class EpubViewer extends AppCompatActivity {
 
         return true;
     }
+
     //Menu Font Family, Font Size, Font Style, Font Weight, Text-Align, Line Height, Margin, Theme
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -661,7 +679,9 @@ public class EpubViewer extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
     Menu mainMenu;
+
     public void whichFontFamily(Menu mainMenu) {
         this.mainMenu = mainMenu;
         if (getFromPreferences("font-family").equals("sans-serif")) {
@@ -698,6 +718,7 @@ public class EpubViewer extends AppCompatActivity {
         }
         webView.reload();
     }
+
     public void whichFontSize(Menu mainMenu) {
         this.mainMenu = mainMenu;
         if (getFromPreferences("font-size").equals("90%")) {
@@ -734,6 +755,7 @@ public class EpubViewer extends AppCompatActivity {
         }
         webView.reload();
     }
+
     public void whichFontStyle(Menu mainMenu) {
         this.mainMenu = mainMenu;
         if (getFromPreferences("font-style").equals("normal")) {
@@ -752,6 +774,7 @@ public class EpubViewer extends AppCompatActivity {
         }
         webView.reload();
     }
+
     public void whichFontWeight(Menu mainMenu) {
         this.mainMenu = mainMenu;
         if (getFromPreferences("font-weight").equals("normal")) {
@@ -770,6 +793,7 @@ public class EpubViewer extends AppCompatActivity {
         }
         webView.reload();
     }
+
     public void whichTextAlign(Menu mainMenu) {
         this.mainMenu = mainMenu;
         if (getFromPreferences("text-align").equals("left")) {
@@ -806,6 +830,7 @@ public class EpubViewer extends AppCompatActivity {
         }
         webView.reload();
     }
+
     public void whichLineHeight(Menu mainMenu) {
         this.mainMenu = mainMenu;
         if (getFromPreferences("line-height").equals("1.2")) {
@@ -842,6 +867,7 @@ public class EpubViewer extends AppCompatActivity {
         }
         webView.reload();
     }
+
     public void whichMargin(Menu mainMenu) {
         this.mainMenu = mainMenu;
         if (getFromPreferences("margin").equals("0%")) {
@@ -890,6 +916,7 @@ public class EpubViewer extends AppCompatActivity {
         }
         webView.reload();
     }
+
     public void whichTheme(Menu mainMenu) {
         this.mainMenu = mainMenu;
         if (getFromPreferences("themeback").equals("GhostWhite")) {
@@ -947,11 +974,13 @@ public class EpubViewer extends AppCompatActivity {
         }
         super.onActionModeStarted(mode);
     }
+
     @Override
     public void onActionModeFinished(ActionMode mode) {
         searchViewLongClick = false;
         super.onActionModeFinished(mode);
     }
+
     //WebView Gesture
     private class CustomeGestureDetector extends GestureDetector.SimpleOnGestureListener {
         @Override
@@ -992,6 +1021,7 @@ public class EpubViewer extends AppCompatActivity {
             }
         }
     }
+
     //Inject CSS to WebView
     private final static String CREATE_CUSTOM_SHEET =
             "if (typeof(document.head) != 'undefined' && typeof(customSheet) == 'undefined') {"
@@ -1002,6 +1032,7 @@ public class EpubViewer extends AppCompatActivity {
                     + "return style.sheet;"
                     + "})();"
                     + "}";
+
     private void InjectCss(WebView webView, String... cssRules) {
         StringBuilder jsUrl = new StringBuilder("javascript:");
         jsUrl.append(CREATE_CUSTOM_SHEET).append("if (typeof(customSheet) != 'undefined') {");
@@ -1012,12 +1043,13 @@ public class EpubViewer extends AppCompatActivity {
         jsUrl.append("}");
         webView.loadUrl(jsUrl.toString());
     }
+
     //Sync WebView Scroll and Seek Bar Progress
     public void SyncWebViewScrollSeekBar() {
         if (webView.getUrl() != null && (webView.getUrl().startsWith("http://") || webView.getUrl().startsWith("https://"))) {
             return;
         }
-        
+
         int real = seekBar.getMax() * pageNumber / pages.size();
 
         float webViewHeight = (webView.getContentHeight() * webView.getScale()) - webView.getHeight();

@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/BookPub-master.iml" filepath="$PROJECT_DIR$/.idea/modules/BookPub-master.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/EPUB.iml" filepath="$PROJECT_DIR$/.idea/modules/EPUB.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/EPUB.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/EPUB.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/EPUB.main.iml" filepath="$PROJECT_DIR$/.idea/modules/EPUB.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/EPUB.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/EPUB.unitTest.iml" />
     </modules>
   </component>
 </project>

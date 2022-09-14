@@ -38,7 +38,7 @@ public class DeleteBookDialog extends Dialog implements android.view.View.OnClic
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.delete_book_dialog);
-        
+
         name = (TextView) findViewById(R.id.bookNameTextView);
         name.setText("Do you want to delete " + bookName);
 
