@@ -33,4 +33,9 @@ public class CustomWebView extends WebView {
     public void setGestureDetector(GestureDetector gestureDetector) {
         this.gestureDetector = gestureDetector;
     }
+
+    @Override
+    public void loadUrl(String url) {
+        super.loadUrl(url);
+    }
 }

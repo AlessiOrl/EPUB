@@ -42,6 +42,22 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Objects;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+
+import nl.siegmann.epublib.domain.Book;
+import nl.siegmann.epublib.domain.TOCReference;
+import nl.siegmann.epublib.epub.EpubReader;
+import android.app.Activity;
+import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Bundle;
+import android.util.Log;
+
 
 public class EpubViewer extends AppCompatActivity {
 
@@ -88,6 +104,29 @@ public class EpubViewer extends AppCompatActivity {
         final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        AssetManager assetManager = getAssets();
+
+        //Test
+        path = getIntent().getStringExtra("path");
+        try {
+            // find InputStream for book
+            InputStream epubInputStream = assetManager.open(path);
+
+            // Load Book from inputStream
+            Book book = (new EpubReader()).readEpub(epubInputStream);
+
+            // Log the book's authors
+            Log.i("epublib", "author(s): " + book.getMetadata().getAuthors());
+
+            // Log the book's title
+            Log.i("epublib", "title: " + book.getTitle());
+
+            // Log the tale of contents
+            logTableOfContents(book.getTableOfContents().getTocReferences(), 0);
+        } catch (IOException e) {
+            Log.e("epublib", e.getMessage());
+        }
 
         //WebView
         webView = (CustomWebView) findViewById(R.id.custom_WebView);
@@ -168,6 +207,7 @@ public class EpubViewer extends AppCompatActivity {
                 InjectCss(view, "* { color: " + getFromPreferences("themefront") + " !important; }");
                 InjectCss(view, "* { line-height: " + getFromPreferences("line-height") + " !important; }");
                 InjectCss(view, "body { margin: " + getFromPreferences("margin") + " !important; }");
+                InjectCss(view, "highlighted { background-color: #FFFF00 !important; opacity: " + (Objects.equals(getFromPreferences("highlight"), "Highlight_On") ? "70%" : "0%") + " !important;  }");
                 InjectCss(view, "img { display: block !important; width: 100% !important; height: auto !important; }");
 
                 try {
@@ -228,7 +268,7 @@ public class EpubViewer extends AppCompatActivity {
         playpause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(context, "Playing " +  navigationViewContent.getCheckedItem() , Toast.LENGTH_LONG).show();
+                Toast.makeText(context, "Playing " + navigationViewContent.getCheckedItem(), Toast.LENGTH_LONG).show();
                 //#TODO START AUDIO PLAYER
             }
         });
@@ -288,6 +328,9 @@ public class EpubViewer extends AppCompatActivity {
                     webViewScrollAmount = Integer.parseInt(getIntent().getStringExtra("currentScroll"));
                 }
             }
+
+
+
             webView.loadUrl("file://" + pages.get(pageNumber));
         } else {
             finish();
@@ -358,6 +401,30 @@ public class EpubViewer extends AppCompatActivity {
 
         checkSharedPreferences();
     }
+
+
+    /**
+     * Recursively Log the Table of Contents
+     *
+     * @param tocReferences
+     * @param depth
+     */
+    private void logTableOfContents(List<TOCReference> tocReferences, int depth) {
+        if (tocReferences == null) {
+            return;
+        }
+        for (TOCReference tocReference : tocReferences) {
+            StringBuilder tocString = new StringBuilder();
+            for (int i = 0; i < depth; i++) {
+                tocString.append("\t");
+            }
+            tocString.append(tocReference.getTitle());
+            Log.i("epublib", tocString.toString());
+
+            logTableOfContents(tocReference.getChildren(), depth + 1);
+        }
+    }
+
 
     //Reload Navigation View Quote
     public void reloadNavQuote() {
@@ -471,6 +538,7 @@ public class EpubViewer extends AppCompatActivity {
         whichLineHeight(menu);
         whichMargin(menu);
         whichTheme(menu);
+        whichHighlight(menu);
         webView.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -676,6 +744,14 @@ public class EpubViewer extends AppCompatActivity {
                 setToPreferences("themefront", "DimGrey");
                 whichTheme(mainMenu);
                 return true;
+            case R.id.highlighton:
+                setToPreferences("highlight", "Highlight_On");
+                whichHighlight(mainMenu);
+                return true;
+            case R.id.highlightoff:
+                setToPreferences("highlight", "Highlight_Off");
+                whichHighlight(mainMenu);
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -771,6 +847,19 @@ public class EpubViewer extends AppCompatActivity {
             mainMenu.findItem(R.id.normal_style).setTitle(Html.fromHtml("<font color='black'>Normal</font>"));
             mainMenu.findItem(R.id.italic).setTitle(Html.fromHtml("<font color='black'>Italic</font>"));
             mainMenu.findItem(R.id.default_style).setTitle(Html.fromHtml("<font color='#008577'>Default</font>"));
+        }
+        webView.reload();
+    }
+
+    public void whichHighlight(Menu mainMenu) {
+        this.mainMenu = mainMenu;
+        if (getFromPreferences("highlight").equals("Highlight_Off")) {
+            mainMenu.findItem(R.id.highlighton).setTitle(Html.fromHtml("<font color='black'>On</font>"));
+            mainMenu.findItem(R.id.highlightoff).setTitle(Html.fromHtml("<font color='#008577'>Off</font>"));
+        } else {
+            setToPreferences("highlight", "On");
+            mainMenu.findItem(R.id.highlighton).setTitle(Html.fromHtml("<font color='#008577'>On</font>"));
+            mainMenu.findItem(R.id.highlightoff).setTitle(Html.fromHtml("<font color='black'>Off</font>"));
         }
         webView.reload();
     }

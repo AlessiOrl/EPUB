@@ -4,7 +4,7 @@
 
 ### Android ###
 # Gradle files
-.gradle/
+/.gradle/
 build/
 
 # Local configuration file (sdk path, etc)
@@ -214,4 +214,5 @@ fabric.properties
 # End of https://www.toptal.com/developers/gitignore/api/android,androidstudio,java,windows
 /.gradle/
 /.idea/
+/.gradle/
 /.gradle/
