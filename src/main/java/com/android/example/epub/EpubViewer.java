@@ -36,6 +36,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -51,6 +52,7 @@ import java.util.List;
 import nl.siegmann.epublib.domain.Book;
 import nl.siegmann.epublib.domain.TOCReference;
 import nl.siegmann.epublib.epub.EpubReader;
+
 import android.app.Activity;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -65,7 +67,6 @@ public class EpubViewer extends AppCompatActivity {
     SharedPreferences sharedPreferences;
     CustomWebView webView;
 
-    SaveQuote saveQuote;
     List<List> quoteList = new ArrayList<>();
     String bookTitle;
     String gQuote = "";
@@ -105,14 +106,15 @@ public class EpubViewer extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        AssetManager assetManager = getAssets();
+
+        path = getIntent().getStringExtra("path");
+        File file = new File(path);
+
 
         //Test
-        path = getIntent().getStringExtra("path");
         try {
             // find InputStream for book
-            InputStream epubInputStream = assetManager.open(path);
-
+            InputStream epubInputStream = new FileInputStream(file);
             // Load Book from inputStream
             Book book = (new EpubReader()).readEpub(epubInputStream);
 
@@ -125,7 +127,7 @@ public class EpubViewer extends AppCompatActivity {
             // Log the tale of contents
             logTableOfContents(book.getTableOfContents().getTocReferences(), 0);
         } catch (IOException e) {
-            Log.e("epublib", e.getMessage());
+            e.printStackTrace();
         }
 
         //WebView
@@ -231,7 +233,6 @@ public class EpubViewer extends AppCompatActivity {
                                         public void run() {
                                             String[] anchor = finalUrl.split("#");
                                             webView.loadUrl("javascript:document.getElementById(\"" + anchor[anchor.length - 1] + "\").scrollIntoView()");
-                                            saveQuote.highlightQuote(pageNumber);
                                             SyncWebViewScrollSeekBar();
                                         }
                                     }, 500);
@@ -240,7 +241,6 @@ public class EpubViewer extends AppCompatActivity {
                                         @Override
                                         public void run() {
                                             webView.scrollTo(0, webViewScrollAmount);
-                                            saveQuote.highlightQuote(pageNumber);
                                             SyncWebViewScrollSeekBar();
                                         }
                                     }, 500);
@@ -252,12 +252,6 @@ public class EpubViewer extends AppCompatActivity {
                 }
             }
         });
-        //Save Quotes
-        try {
-            saveQuote = new SaveQuote(webView, quoteList);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
         //Seekbar
         final TextView textViewPercent = (TextView) findViewById(R.id.textViewPercent);
@@ -301,7 +295,6 @@ public class EpubViewer extends AppCompatActivity {
                         @Override
                         public void run() {
                             webView.scrollTo(0, whichScroll);
-                            saveQuote.highlightQuote(pageNumber);
                             seeking = false;
                         }
                     }, 300);
@@ -330,19 +323,12 @@ public class EpubViewer extends AppCompatActivity {
             }
 
 
-
             webView.loadUrl("file://" + pages.get(pageNumber));
         } else {
             finish();
             Toast.makeText(context, "Unable to open", Toast.LENGTH_LONG).show();
         }
 
-        //Save Quotes Get Quotes
-        try {
-            saveQuote.getQuotes(bookTitle);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
         //Navigation Drawer
         drawer = findViewById(R.id.drawer_layout);
@@ -1035,13 +1021,8 @@ public class EpubViewer extends AppCompatActivity {
             mode.getMenu().findItem(15264685).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
-                    try {
-                        if (!gQuote.equals("") || gQuote.equals(null)) {
-                            saveQuote.addQuote(gQuote, bookTitle, pageNumber, webView.getScrollY());
-                            reloadNavQuote();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    if (!gQuote.equals("") || gQuote.equals(null)) {
+                        reloadNavQuote();
                     }
                     return false;
                 }
@@ -1049,13 +1030,8 @@ public class EpubViewer extends AppCompatActivity {
             mode.getMenu().findItem(45657841).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
-                    try {
-                        if (!gQuote.equals("") || gQuote.equals(null)) {
-                            saveQuote.removeQuote(gQuote, bookTitle, 0, getFromPreferences("themeback"));
-                            reloadNavQuote();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    if (!gQuote.equals("") || gQuote.equals(null)) {
+                        reloadNavQuote();
                     }
                     return false;
                 }
