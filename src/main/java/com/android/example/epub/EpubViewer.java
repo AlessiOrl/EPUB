@@ -7,8 +7,12 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+import android.support.annotation.RequiresApi;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -17,7 +21,6 @@ import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.view.ActionMode;
 import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -25,39 +28,26 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.Random;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-
-import nl.siegmann.epublib.domain.Book;
-import nl.siegmann.epublib.domain.TOCReference;
-import nl.siegmann.epublib.epub.EpubReader;
-
-import android.app.Activity;
-import android.content.res.AssetManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.Bundle;
 import android.util.Log;
 
 
@@ -67,13 +57,19 @@ public class EpubViewer extends AppCompatActivity {
     SharedPreferences sharedPreferences;
     CustomWebView webView;
 
-    List<List> quoteList = new ArrayList<>();
     String bookTitle;
     String gQuote = "";
     boolean searchViewLongClick = false;
 
     SeekBar seekBar;
-    Button playpause;
+    FloatingActionButton start;
+    FloatingActionButton stop;
+    FloatingActionButton play;
+    FloatingActionButton pause;
+
+    FloatingActionButton ff;
+    FloatingActionButton rew;
+
     boolean seeking = false;
 
     RefreshEpub refreshEpub;
@@ -86,20 +82,19 @@ public class EpubViewer extends AppCompatActivity {
 
     DrawerLayout drawer;
     NavigationView navigationViewContent;
-    NavigationView navigationViewQuote;
-    ImageButton shareQuotesButton;
-    ImageButton deleteQuotesButton;
-
     int webViewScrollAmount = 0;
+    TextToSpeech tts;
+    ArrayList<String> readableStrings;
+    int lastSentencereaded;
 
-
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint({"ClickableViewAccessibility", "JavascriptInterface"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_epub_viewer);
         context = getApplicationContext();
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+
 
         //Toolbar
         final Toolbar toolbar = findViewById(R.id.toolbar);
@@ -108,30 +103,57 @@ public class EpubViewer extends AppCompatActivity {
 
 
         path = getIntent().getStringExtra("path");
-        File file = new File(path);
 
+        //TTS
+        lastSentencereaded = 0;
+        tts = new TextToSpeech(EpubViewer.this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                int result = tts.setLanguage(Locale.ENGLISH);
 
-        //Test
-        try {
-            // find InputStream for book
-            InputStream epubInputStream = new FileInputStream(file);
-            // Load Book from inputStream
-            Book book = (new EpubReader()).readEpub(epubInputStream);
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Log.i("TextToSpeech", "Language Not Supported");
+                }
 
-            // Log the book's authors
-            Log.i("epublib", "author(s): " + book.getMetadata().getAuthors());
+                tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                    @Override
+                    public void onStart(String utteranceId) {
 
-            // Log the book's title
-            Log.i("epublib", "title: " + book.getTitle());
+                        Log.i("TextToSpeech", "On Start");
 
-            // Log the tale of contents
-            logTableOfContents(book.getTableOfContents().getTocReferences(), 0);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+                        runOnUiThread(() -> {
+                            if (lastSentencereaded > 1)
+                                highlight_sentence(Math.min(lastSentencereaded - 2, readableStrings.size()));
+                        });
+                    }
 
+                    @Override
+                    public void onDone(String utteranceId) {
+                        Log.i("TextToSpeech", "On Done " + lastSentencereaded);
+
+                        runOnUiThread(() -> {
+                            lastSentencereaded++;
+                            if (lastSentencereaded < readableStrings.size()) {
+                                readcurrent();
+                            } else {
+                                readNextChapter();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(String utteranceId) {
+                        Log.i("TextToSpeech", "On Error");
+                    }
+                });
+            } else {
+                Log.i("TextToSpeech", "Initialization Failed");
+            }
+        });
+
+        /* An instance of this class will be registered as a JavaScript interface */
         //WebView
-        webView = (CustomWebView) findViewById(R.id.custom_WebView);
+
+        webView = findViewById(R.id.custom_WebView);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDefaultTextEncodingName("utf-8");
         webView.setGestureDetector(new GestureDetector(new CustomeGestureDetector()));
@@ -150,7 +172,7 @@ public class EpubViewer extends AppCompatActivity {
                     case MotionEvent.ACTION_UP: {
                         long clickDuration = Calendar.getInstance().getTimeInMillis() - startClickTime;
                         if (clickDuration < MAX_CLICK_DURATION) {
-                            RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.seekLayout);
+                            RelativeLayout relativeLayout = findViewById(R.id.seekLayout);
                             if (relativeLayout.getVisibility() == View.VISIBLE) {
                                 relativeLayout.setVisibility(View.GONE);
                             } else if (relativeLayout.getVisibility() == View.GONE) {
@@ -186,17 +208,12 @@ public class EpubViewer extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-
                 if (url != null && (url.startsWith("http://") || url.startsWith("https://"))) {
                     return;
                 }
-
                 webView.loadUrl("javascript:(function() { " + "var text=''; setInterval(function(){ if (window.getSelection().toString() && text!==window.getSelection().toString()){ text=window.getSelection().toString(); console.log(text); }}, 20);" + "})()");
-                webView.setWebChromeClient(new WebChromeClient() {
-                    public void onConsoleMessage(String message, int lineNumber, String sourceID) {
-                        gQuote = message;
-                    }
-                });
+
+                webView.loadUrl("javascript:window.INTERFACE.setContent(document.getElementsByTagName('body')[0].innerText);");
 
                 InjectCss(view, "::selection { background: #ffb7b7; }");
                 InjectCss(view, "* { padding: 0px !important; letter-spacing: normal !important; max-width: none !important; }");
@@ -209,7 +226,7 @@ public class EpubViewer extends AppCompatActivity {
                 InjectCss(view, "* { color: " + getFromPreferences("themefront") + " !important; }");
                 InjectCss(view, "* { line-height: " + getFromPreferences("line-height") + " !important; }");
                 InjectCss(view, "body { margin: " + getFromPreferences("margin") + " !important; }");
-                InjectCss(view, "highlighted { background-color: #FFFF00 !important; opacity: " + (Objects.equals(getFromPreferences("highlight"), "Highlight_On") ? "70%" : "0%") + " !important;  }");
+                InjectCss(view, ".highlight { background-color: rgb(255, 165, 0, " + (Objects.equals(getFromPreferences("highlight"), "on") ? "0.7" : "0") + ");  }");
                 InjectCss(view, "img { display: block !important; width: 100% !important; height: auto !important; }");
 
                 try {
@@ -217,32 +234,27 @@ public class EpubViewer extends AppCompatActivity {
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
+
                 for (int i = 0; i < pages.size(); i++) {
                     if (url.contains(pages.get(i))) {
                         pageNumber = pages.indexOf(pages.get(i));
                         if (pageNumber > -1) {
                             navigationViewContent.getMenu().getItem(pageNumber).setChecked(true);
-                            TextView textViewPage = (TextView) findViewById(R.id.textViewPage);
-                            //navigationViewContent.getCheckedItem().toString() NOME DEL CAPITOLO
+                            TextView textViewPage = findViewById(R.id.textViewPage);
+
                             textViewPage.setText("Page: " + navigationViewContent.getCheckedItem().toString());
                             if (!seeking) {
                                 if (url.contains("#")) {
                                     final String finalUrl = url;
-                                    webView.postDelayed(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            String[] anchor = finalUrl.split("#");
-                                            webView.loadUrl("javascript:document.getElementById(\"" + anchor[anchor.length - 1] + "\").scrollIntoView()");
-                                            SyncWebViewScrollSeekBar();
-                                        }
+                                    webView.postDelayed(() -> {
+                                        String[] anchor = finalUrl.split("#");
+                                        webView.loadUrl("javascript:document.getElementById(\"" + anchor[anchor.length - 1] + "\").scrollIntoView()");
+                                        SyncWebViewScrollSeekBar();
                                     }, 500);
                                 } else {
-                                    webView.postDelayed(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            webView.scrollTo(0, webViewScrollAmount);
-                                            SyncWebViewScrollSeekBar();
-                                        }
+                                    webView.postDelayed(() -> {
+                                        webView.scrollTo(0, webViewScrollAmount);
+                                        SyncWebViewScrollSeekBar();
                                     }, 500);
                                 }
                             }
@@ -250,21 +262,64 @@ public class EpubViewer extends AppCompatActivity {
                         break;
                     }
                 }
+
+
+
             }
         });
 
         //Seekbar
-        final TextView textViewPercent = (TextView) findViewById(R.id.textViewPercent);
-        seekBar = (SeekBar) findViewById(R.id.seekBar);
+        final TextView textViewPercent = findViewById(R.id.textViewPercent);
+        seekBar = findViewById(R.id.seekBar);
         seekBar.setMax(100);
         seekBar.setPadding(100, 0, 100, 0);
-        playpause = (Button) findViewById(R.id.button_playpause);
-        playpause.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Toast.makeText(context, "Playing " + navigationViewContent.getCheckedItem(), Toast.LENGTH_LONG).show();
-                //#TODO START AUDIO PLAYER
+
+        start = findViewById(R.id.FAB_start);
+        stop = findViewById(R.id.FAB_stop);
+        play = findViewById(R.id.FAB_play);
+        pause = findViewById(R.id.FAB_pause);
+        ff = findViewById(R.id.FAB_forward);
+        rew = findViewById(R.id.FAB_rew);
+        final FloatingActionButton[] mediabuttons = {ff, play, pause, stop, rew};
+
+
+
+
+        /*
+        MEDIA SECTION
+         */
+
+        start.setOnClickListener(view -> {
+
+            start.hide();
+            for (FloatingActionButton mediabutton : mediabuttons) {
+                mediabutton.show();
             }
+
+            startReading();
+        });
+        stop.setOnClickListener(view -> {
+            for (FloatingActionButton mediabutton : mediabuttons) {
+                mediabutton.hide();
+            }
+            start.show();
+            stopReading();
+        });
+        play.setOnClickListener(view -> {
+            pause.show();
+            play.hide();
+            resumeReading();
+        });
+        pause.setOnClickListener(view -> {
+            play.show();
+            pause.hide();
+            pauseReading();
+        });
+        ff.setOnClickListener(view -> {
+            gotoNext();
+        });
+        rew.setOnClickListener(view -> {
+            gotoPrevious();
         });
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int progress;
@@ -291,17 +346,13 @@ public class EpubViewer extends AppCompatActivity {
 
                 if (pages.size() >= 0 && pages.size() > whichPage) {
                     webView.loadUrl("file://" + pages.get((int) whichPage));
-                    webView.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            webView.scrollTo(0, whichScroll);
-                            seeking = false;
-                        }
+                    webView.postDelayed(() -> {
+                        webView.scrollTo(0, whichScroll);
+                        seeking = false;
                     }, 300);
                 }
             }
         });
-
         refreshEpub = MainActivity.getInstance().refreshEpub;
 
         //Unzip and Show Epub
@@ -321,8 +372,6 @@ public class EpubViewer extends AppCompatActivity {
                     webViewScrollAmount = Integer.parseInt(getIntent().getStringExtra("currentScroll"));
                 }
             }
-
-
             webView.loadUrl("file://" + pages.get(pageNumber));
         } else {
             finish();
@@ -339,137 +388,142 @@ public class EpubViewer extends AppCompatActivity {
             navigationViewContent.getMenu().add(secondSplittedLink[0]);
             navigationViewContent.getMenu().getItem(i).setCheckable(true);
 
-            navigationViewContent.getMenu().getItem(i).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem item) {
-                    for (int i = 0; i < pages.size(); i++) {
-                        String[] firstSplittedLink = pages.get(i).split("/");
-                        String[] secondSplittedLink = firstSplittedLink[firstSplittedLink.length - 1].split("\\.");
-                        if (secondSplittedLink[0].equals(item.toString())) {
-                            webView.loadUrl("file://" + pages.get(i));
-                            webViewScrollAmount = 0;
-                            break;
-                        }
+            navigationViewContent.getMenu().getItem(i).setOnMenuItemClickListener(item -> {
+                for (int i1 = 0; i1 < pages.size(); i1++) {
+                    String[] firstSplittedLink1 = pages.get(i1).split("/");
+                    String[] secondSplittedLink1 = firstSplittedLink1[firstSplittedLink1.length - 1].split("\\.");
+                    if (secondSplittedLink1[0].equals(item.toString())) {
+                        webView.loadUrl("file://" + pages.get(i1));
+                        webViewScrollAmount = 0;
+                        break;
                     }
-                    drawer.closeDrawer(GravityCompat.START);
-                    return false;
                 }
+                drawer.closeDrawer(GravityCompat.START);
+                return false;
             });
         }
-        navigationViewQuote = findViewById(R.id.nav_view_quote);
-        shareQuotesButton = navigationViewQuote.getHeaderView(0).findViewById(R.id.sharequotes);
-        deleteQuotesButton = navigationViewQuote.getHeaderView(0).findViewById(R.id.deletequotes);
-        shareQuotesButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent();
-                intent.setAction(Intent.ACTION_SEND);
-                intent.putExtra(Intent.EXTRA_SUBJECT, bookTitle + " Quote List");
-                File parentFile = new File(Environment.getExternalStorageDirectory(), "Book Quotes");
-                File file = new File(parentFile, bookTitle + " Quote List.txt");
-                intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
-                intent.setType("text/plain");
-                startActivity(Intent.createChooser(intent, bookTitle + " Quote List"));
-            }
-        });
-        deleteQuotesButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                File parentFile = new File(Environment.getExternalStorageDirectory(), "Book Quotes");
-                File file = new File(parentFile, bookTitle + " Quote List.txt");
-                file.delete();
-                quoteList.clear();
-                reloadNavQuote();
-                webView.reload();
-            }
-        });
-        reloadNavQuote();
 
         checkSharedPreferences();
+
     }
 
+    private void startReading() {
 
-    /**
-     * Recursively Log the Table of Contents
-     *
-     * @param tocReferences
-     * @param depth
-     */
-    private void logTableOfContents(List<TOCReference> tocReferences, int depth) {
-        if (tocReferences == null) {
-            return;
-        }
-        for (TOCReference tocReference : tocReferences) {
-            StringBuilder tocString = new StringBuilder();
-            for (int i = 0; i < depth; i++) {
-                tocString.append("\t");
-            }
-            tocString.append(tocReference.getTitle());
-            Log.i("epublib", tocString.toString());
+        webView.postDelayed(() -> {
+            readableStrings = webView.getMyInterface().getContentSentences();
+            readableStrings.removeAll(Arrays.asList(null, ""));
+            if (readableStrings.isEmpty()) readNextChapter();
+            else readcurrent();
 
-            logTableOfContents(tocReference.getChildren(), depth + 1);
-        }
+        }, 500);
+
+
     }
 
+    private void readcurrent() {
+        tts.speak(readableStrings.get(lastSentencereaded), TextToSpeech.QUEUE_FLUSH, null, TextToSpeech.ACTION_TTS_QUEUE_PROCESSING_COMPLETED);
+    }
 
-    //Reload Navigation View Quote
-    public void reloadNavQuote() {
-        navigationViewQuote.getMenu().clear();
-        for (int i = 0; i < quoteList.size(); i++) {
-            navigationViewQuote.getMenu().add(quoteList.get(i).get(0).toString());
-
-            navigationViewQuote.getMenu().getItem(i).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem item) {
-                    for (int j = 0; j < quoteList.size(); j++) {
-                        if (quoteList.get(j).get(0).toString().equals(item.toString())) {
-                            webView.loadUrl("file://" + pages.get(Integer.parseInt(quoteList.get(j).get(2).toString())));
-                            webViewScrollAmount = Integer.parseInt(quoteList.get(j).get(3).toString());
-                        }
-                    }
-                    drawer.closeDrawer(GravityCompat.END);
-                    return false;
-                }
-            });
-        }
-
-        if (quoteList.isEmpty()) {
-            shareQuotesButton.setVisibility(View.GONE);
-            deleteQuotesButton.setVisibility(View.GONE);
-        } else {
-            shareQuotesButton.setVisibility(View.VISIBLE);
-            deleteQuotesButton.setVisibility(View.VISIBLE);
+    public void pauseReading() {
+        if (tts.isSpeaking()) {
+            tts.stop();
         }
     }
 
-    //On Activity Stop
-    @Override
-    public boolean onSupportNavigateUp() {
-        finish();
-        return true;
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else if (drawer.isDrawerOpen(GravityCompat.END)) {
-            drawer.closeDrawer(GravityCompat.END);
-        } else {
-            super.onBackPressed();
+    public void resumeReading() {
+        if (!tts.isSpeaking()) {
+            readcurrent();
         }
     }
 
-    @Override
-    public void onStop() {
-        try {
-            refreshEpub.addCurrentPageScroll(refreshEpub.bookList, path, pageNumber, webView.getScrollY());
-            refreshEpub.addCurrentPageScroll(refreshEpub.customAdapter.searchedBookList, path, pageNumber, webView.getScrollY());
-        } catch (IOException e) {
-            e.printStackTrace();
+    public void stopReading() {
+        if (tts.isSpeaking()) {
+            tts.stop();
+            lastSentencereaded = 0;
+            highlight_sentence(-1);
         }
-        finish();
-        super.onStop();
+    }
+
+    public void gotoNext() {
+        if (tts.isSpeaking()) {
+            tts.stop();
+        }
+        lastSentencereaded++;
+        readcurrent();
+    }
+
+    public void readNextChapter() {
+
+        stopReading();
+
+        pageNumber++;
+        webView.loadUrl("file://" + pages.get(pageNumber));
+        seekBar.setProgress(seekBar.getMax() * pageNumber / pages.size());
+        webViewScrollAmount = 0;
+
+        startReading();
+
+    }
+
+    public void readPreviousChapter() {
+
+        pageNumber--;
+        webView.loadUrl("file://" + pages.get(pageNumber));
+        seekBar.setProgress(seekBar.getMax() * pageNumber / pages.size());
+        webViewScrollAmount = (int) (webView.getContentHeight() * webView.getScale()) - webView.getHeight();
+        lastSentencereaded = 0;
+
+
+    }
+
+    public void gotoPrevious() {
+        if (tts.isSpeaking()) {
+            tts.stop();
+        }
+        lastSentencereaded--;
+        readcurrent();
+    }
+
+    public void highlight_sentence(int x) {
+        webView.evaluateJavascript("(function() { " +
+                "\tvar x = " + x + " ;\n" +
+                "\tvar nodeList = document.body.children;\n" +
+                "  var check = true\n" +
+                "  var ret = -1\n" +
+                "  var i = 0\n" +
+                "  while (i < nodeList.length && check) \n" +
+                "  {\n" +
+                "    var selected = nodeList[i];\n" +
+                "    var tagname = selected.tagName.toLowerCase();\n" +
+                "  \tif (tagname == \"section\"){ \n" +
+                "    nodeList = selected.children;\n" +
+                "    check = false\n" +
+                "    }\n" +
+                "    i++\n" +
+                "  }\n" +
+                "  if (!check)\n" +
+                "  {\n" +
+                "    var aux_index = 0;\n" +
+                "\t\tfor (var i = 0; i < nodeList.length; i++) \n" +
+                "    {\n" +
+                "      var selected = nodeList[i];\n" +
+                "    \tvar tagname = selected.tagName.toLowerCase();\n" +
+                "       \n" +
+                "    \tif (tagname == \"p\") {\n" +
+                "      \tif (aux_index == x) \n" +
+                "        {\n" +
+                "      \t\tselected.classList.add(\"highlight\");\n" +
+                "          ret = 1;\n" +
+                "        } else \n" +
+                "        {\n" +
+                "        \tselected.classList.remove(\"highlight\");\n" +
+                "        }\n" +
+                "      \taux_index += 1;\n" +
+                "      } \n" +
+                "  \t}\n" +
+                "  }\n" +
+                "  return ret;" +
+                " })();", s -> Log.d("LogName", s));
     }
 
     //Check Shared Preferences
@@ -525,29 +579,16 @@ public class EpubViewer extends AppCompatActivity {
         whichMargin(menu);
         whichTheme(menu);
         whichHighlight(menu);
-        webView.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                webView.reload();
-            }
-        }, 150);
+        webView.postDelayed(() -> webView.reload(), 150);
 
         MenuItem menuItem = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) menuItem.getActionView();
         searchView.setMaxWidth(500);
         menu.findItem(R.id.find_next).setVisible(false);
-        searchView.setOnSearchClickListener(new SearchView.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mainMenu.findItem(R.id.find_next).setVisible(true);
-            }
-        });
-        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
-            @Override
-            public boolean onClose() {
-                mainMenu.findItem(R.id.find_next).setVisible(false);
-                return false;
-            }
+        searchView.setOnSearchClickListener(v -> mainMenu.findItem(R.id.find_next).setVisible(true));
+        searchView.setOnCloseListener(() -> {
+            mainMenu.findItem(R.id.find_next).setVisible(false);
+            return false;
         });
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -561,12 +602,9 @@ public class EpubViewer extends AppCompatActivity {
                 return false;
             }
         });
-        searchView.findViewById(R.id.search_src_text).setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                searchViewLongClick = true;
-                return false;
-            }
+        searchView.findViewById(R.id.search_src_text).setOnLongClickListener(v -> {
+            searchViewLongClick = true;
+            return false;
         });
 
         return true;
@@ -731,11 +769,11 @@ public class EpubViewer extends AppCompatActivity {
                 whichTheme(mainMenu);
                 return true;
             case R.id.highlighton:
-                setToPreferences("highlight", "Highlight_On");
+                setToPreferences("highlight", "on");
                 whichHighlight(mainMenu);
                 return true;
             case R.id.highlightoff:
-                setToPreferences("highlight", "Highlight_Off");
+                setToPreferences("highlight", "off");
                 whichHighlight(mainMenu);
                 return true;
         }
@@ -839,11 +877,11 @@ public class EpubViewer extends AppCompatActivity {
 
     public void whichHighlight(Menu mainMenu) {
         this.mainMenu = mainMenu;
-        if (getFromPreferences("highlight").equals("Highlight_Off")) {
+        if (getFromPreferences("highlight").equals("off")) {
             mainMenu.findItem(R.id.highlighton).setTitle(Html.fromHtml("<font color='black'>On</font>"));
             mainMenu.findItem(R.id.highlightoff).setTitle(Html.fromHtml("<font color='#008577'>Off</font>"));
         } else {
-            setToPreferences("highlight", "On");
+            setToPreferences("highlight", "on");
             mainMenu.findItem(R.id.highlighton).setTitle(Html.fromHtml("<font color='#008577'>On</font>"));
             mainMenu.findItem(R.id.highlightoff).setTitle(Html.fromHtml("<font color='black'>Off</font>"));
         }
@@ -1012,40 +1050,6 @@ public class EpubViewer extends AppCompatActivity {
         webView.reload();
     }
 
-    //WebView LongClick Menu
-    @Override
-    public void onActionModeStarted(ActionMode mode) {
-        if (!searchViewLongClick) {
-            mode.getMenu().add(0, 15264685, 0, "Highlight");
-            mode.getMenu().add(0, 45657841, 0, "Default");
-            mode.getMenu().findItem(15264685).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem item) {
-                    if (!gQuote.equals("") || gQuote.equals(null)) {
-                        reloadNavQuote();
-                    }
-                    return false;
-                }
-            });
-            mode.getMenu().findItem(45657841).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem item) {
-                    if (!gQuote.equals("") || gQuote.equals(null)) {
-                        reloadNavQuote();
-                    }
-                    return false;
-                }
-            });
-        }
-        super.onActionModeStarted(mode);
-    }
-
-    @Override
-    public void onActionModeFinished(ActionMode mode) {
-        searchViewLongClick = false;
-        super.onActionModeFinished(mode);
-    }
-
     //WebView Gesture
     private class CustomeGestureDetector extends GestureDetector.SimpleOnGestureListener {
         @Override
@@ -1068,6 +1072,7 @@ public class EpubViewer extends AppCompatActivity {
                             webView.loadUrl("file://" + pages.get(pageNumber));
                             seekBar.setProgress(seekBar.getMax() * pageNumber / pages.size());
                             webViewScrollAmount = 0;
+                            lastSentencereaded = 0;
                         }
                         return true;
                     } //top to bottom, go to prev document
@@ -1077,6 +1082,7 @@ public class EpubViewer extends AppCompatActivity {
                             webView.loadUrl("file://" + pages.get(pageNumber));
                             seekBar.setProgress(seekBar.getMax() * pageNumber / pages.size());
                             webViewScrollAmount = (int) (webView.getContentHeight() * webView.getScale()) - webView.getHeight();
+                            lastSentencereaded = 0;
                         }
                         return true;
                     }

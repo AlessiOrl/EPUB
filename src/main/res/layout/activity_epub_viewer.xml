@@ -40,23 +40,91 @@
         android:gravity="bottom"
         android:orientation="vertical">
 
-        <Button
-            android:id="@+id/button_playpause"
-            style="@style/Widget.AppCompat.Button"
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/FAB_play"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_above="@id/seekBar"
-            android:layout_alignEnd="@id/seekBar"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="false"
-            android:layout_alignParentEnd="false"
-            android:layout_marginStart="60dp"
-            android:layout_marginEnd="60dp"
+            android:layout_marginRight="8dp"
             android:layout_marginBottom="8dp"
-            android:hapticFeedbackEnabled="true"
-            android:text="Play"
-            android:textAlignment="center"
-            android:textSize="14sp" />
+            android:layout_toRightOf="@id/FAB_rew"
+            android:clickable="true"
+            android:translationX="-96dp"
+            android:visibility="gone"
+            app:srcCompat="@drawable/ic_baseline_play_arrow_24" />
+
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/FAB_pause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/seekBar"
+            android:layout_marginRight="8dp"
+            android:layout_marginBottom="8dp"
+            android:layout_toRightOf="@id/FAB_rew"
+            android:clickable="true"
+            android:translationX="-96dp"
+            android:visibility="gone"
+            app:srcCompat="@drawable/ic_baseline_pause_24" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/FAB_stop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignWithParentIfMissing="false"
+            android:layout_above="@id/seekBar"
+            android:layout_alignParentLeft="false"
+            android:layout_alignParentEnd="false"
+            android:layout_alignParentRight="false"
+            android:layout_alignParentBottom="false"
+            android:layout_centerHorizontal="true"
+            android:layout_marginRight="8dp"
+            android:layout_marginBottom="8dp"
+            android:layout_toRightOf="@id/FAB_rew"
+            android:clickable="true"
+            android:translationX="-32dp"
+            android:visibility="gone"
+            app:srcCompat="@drawable/ic_baseline_stop_24"
+            app:useCompatPadding="false" />
+
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/FAB_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/seekBar"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:translationX="0dp"
+            app:srcCompat="@drawable/ic_baseline_volume_up_24"
+            app:useCompatPadding="false" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/FAB_rew"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/seekBar"
+            android:layout_centerHorizontal="true"
+            android:layout_marginRight="8dp"
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:translationX="-96dp"
+            android:visibility="gone"
+            app:srcCompat="@drawable/ic_baseline_skip_previous_24" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/FAB_forward"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:layout_above="@id/seekBar"
+            android:layout_marginBottom="8dp"
+            android:layout_toRightOf="@id/FAB_rew"
+            android:clickable="true"
+            android:translationX="32dp"
+            android:visibility="gone"
+            app:srcCompat="@drawable/ic_baseline_skip_next_24" />
 
         <SeekBar
             android:id="@+id/seekBar"

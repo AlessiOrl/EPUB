@@ -38,7 +38,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
+
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
@@ -61,5 +66,7 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.71828'
     implementation 'org.slf4j:slf4j-api:1.7.32'
     implementation 'uk.uuid.slf4j:slf4j-android:1.7.30-0'
+
+
 
 }
