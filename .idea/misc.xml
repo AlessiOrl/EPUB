@@ -20,7 +20,15 @@
         <entry key="..\:/Users/lenovo/Desktop/BookPub-master/BookPub-master/src/main/res/menu/main_nav_menu.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/lenovo/Desktop/BookPub-master/BookPub-master/src/main/res/xml/preferences.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/drawable/ic_autorenew_black_24dp.xml" value="0.2985" />
-        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/layout/activity_epub_viewer.xml" value="0.358695652173913" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/drawable/ic_baseline_menu_book_24.xml" value="0.145" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/drawable/ic_baseline_pause_24.xml" value="0.1595" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/drawable/ic_baseline_play_arrow_24.xml" value="0.176" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/drawable/ic_baseline_skip_next_24.xml" value="0.176" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/drawable/ic_baseline_skip_previous_24.xml" value="0.176" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/drawable/ic_baseline_stop_24.xml" value="0.176" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/drawable/ic_baseline_volume_up_24.xml" value="0.176" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/drawable/play.xml" value="0.1595" />
+        <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/layout/activity_epub_viewer.xml" value="0.26356589147286824" />
         <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/layout/activity_main.xml" value="0.358695652173913" />
         <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/layout/activity_main_settings.xml" value="0.1125" />
         <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/layout/custom_row.xml" value="0.358695652173913" />

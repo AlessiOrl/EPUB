@@ -23,6 +23,13 @@
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
+        <WebView
+            android:id="@+id/read_WebView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="none"
+            android:visibility="gone"></WebView>
+
         <com.android.example.epub.CustomWebView
             android:id="@+id/custom_WebView"
             android:layout_width="match_parent"
@@ -46,7 +53,7 @@
             android:layout_height="wrap_content"
             android:layout_above="@id/seekBar"
             android:layout_marginRight="8dp"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="16dp"
             android:layout_toRightOf="@id/FAB_rew"
             android:clickable="true"
             android:translationX="-96dp"
@@ -60,7 +67,7 @@
             android:layout_height="wrap_content"
             android:layout_above="@id/seekBar"
             android:layout_marginRight="8dp"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="16dp"
             android:layout_toRightOf="@id/FAB_rew"
             android:clickable="true"
             android:translationX="-96dp"
@@ -79,7 +86,7 @@
             android:layout_alignParentBottom="false"
             android:layout_centerHorizontal="true"
             android:layout_marginRight="8dp"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="16dp"
             android:layout_toRightOf="@id/FAB_rew"
             android:clickable="true"
             android:translationX="-32dp"
@@ -94,9 +101,10 @@
             android:layout_height="wrap_content"
             android:layout_above="@id/seekBar"
             android:layout_centerHorizontal="true"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="16dp"
             android:clickable="true"
             android:translationX="0dp"
+            app:backgroundTint="@color/colorPrimary"
             app:srcCompat="@drawable/ic_baseline_volume_up_24"
             app:useCompatPadding="false" />
 
@@ -107,7 +115,7 @@
             android:layout_above="@id/seekBar"
             android:layout_centerHorizontal="true"
             android:layout_marginRight="8dp"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="16dp"
             android:clickable="true"
             android:translationX="-96dp"
             android:visibility="gone"
@@ -119,7 +127,7 @@
             android:layout_height="wrap_content"
 
             android:layout_above="@id/seekBar"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="16dp"
             android:layout_toRightOf="@id/FAB_rew"
             android:clickable="true"
             android:translationX="32dp"

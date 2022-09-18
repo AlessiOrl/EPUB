@@ -7,11 +7,9 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
-import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -21,6 +19,7 @@ import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
+import android.text.TextUtils;
 import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -28,8 +27,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.webkit.ValueCallback;
-import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.RelativeLayout;
@@ -39,14 +36,12 @@ import android.widget.Toast;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Random;
 
 import android.util.Log;
 
@@ -56,9 +51,9 @@ public class EpubViewer extends AppCompatActivity {
     Context context;
     SharedPreferences sharedPreferences;
     CustomWebView webView;
+    WebView readingwebView;
 
     String bookTitle;
-    String gQuote = "";
     boolean searchViewLongClick = false;
 
     SeekBar seekBar;
@@ -121,8 +116,7 @@ public class EpubViewer extends AppCompatActivity {
                         Log.i("TextToSpeech", "On Start");
 
                         runOnUiThread(() -> {
-                            if (lastSentencereaded > 1)
-                                highlight_sentence(Math.min(lastSentencereaded - 2, readableStrings.size()));
+                            highlight_sentence(Math.min(lastSentencereaded, readableStrings.size()));
                         });
                     }
 
@@ -131,6 +125,7 @@ public class EpubViewer extends AppCompatActivity {
                         Log.i("TextToSpeech", "On Done " + lastSentencereaded);
 
                         runOnUiThread(() -> {
+                            remove_highlight_sentence(lastSentencereaded);
                             lastSentencereaded++;
                             if (lastSentencereaded < readableStrings.size()) {
                                 readcurrent();
@@ -264,7 +259,6 @@ public class EpubViewer extends AppCompatActivity {
                 }
 
 
-
             }
         });
 
@@ -282,12 +276,6 @@ public class EpubViewer extends AppCompatActivity {
         rew = findViewById(R.id.FAB_rew);
         final FloatingActionButton[] mediabuttons = {ff, play, pause, stop, rew};
 
-
-
-
-        /*
-        MEDIA SECTION
-         */
 
         start.setOnClickListener(view -> {
 
@@ -405,18 +393,58 @@ public class EpubViewer extends AppCompatActivity {
 
         checkSharedPreferences();
 
+                /*
+        MEDIA SECTION
+         */
+        readingwebView = findViewById(R.id.read_WebView);
+        readingwebView.getSettings().setJavaScriptEnabled(true);
+        readingwebView.getSettings().setDefaultTextEncodingName("utf-8");
+        readingwebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return false;
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+
+                String subtitle = readableStrings.get(0);
+                String title = readableStrings.get(1);
+                String lyrics = "[\"" + TextUtils.join("\" , \"", readableStrings.subList(2, readableStrings.size())) + "\"]";
+                int hindex = lastSentencereaded;
+
+                String data = "{ author: '" + title + "' , song: '" + subtitle + "' , albumart: '" + "', lyrics: " + lyrics + ", highlight_index: " + hindex + " }";
+
+                readingwebView.loadUrl("javascript:loadSong(" + data + ")");
+            }
+        });
+
     }
 
     private void startReading() {
-
+        lastSentencereaded = 0;
         webView.postDelayed(() -> {
             readableStrings = webView.getMyInterface().getContentSentences();
             readableStrings.removeAll(Arrays.asList(null, ""));
+
             if (readableStrings.isEmpty()) readNextChapter();
-            else readcurrent();
+            else readChapter();
 
         }, 500);
 
+
+    }
+
+    private void readChapter() {
+        readingwebView.setVisibility(View.VISIBLE);
+        webView.setVisibility(View.GONE);
+
+        readingwebView.postDelayed(() -> {
+            readingwebView.loadUrl("file:///android_asset/index.html");
+
+            readcurrent();
+        }, 500);
 
     }
 
@@ -439,22 +467,36 @@ public class EpubViewer extends AppCompatActivity {
     public void stopReading() {
         if (tts.isSpeaking()) {
             tts.stop();
+            remove_highlight_sentence(lastSentencereaded);
             lastSentencereaded = 0;
-            highlight_sentence(-1);
         }
+        webView.setVisibility(View.VISIBLE);
+        readingwebView.setVisibility(View.GONE);
+
     }
 
     public void gotoNext() {
         if (tts.isSpeaking()) {
             tts.stop();
         }
+        remove_highlight_sentence(lastSentencereaded);
+
         lastSentencereaded++;
+        readcurrent();
+
+    }
+
+    public void gotoPrevious() {
+        if (tts.isSpeaking()) {
+            tts.stop();
+        }
+        remove_highlight_sentence(lastSentencereaded);
+
+        lastSentencereaded--;
         readcurrent();
     }
 
     public void readNextChapter() {
-
-        stopReading();
 
         pageNumber++;
         webView.loadUrl("file://" + pages.get(pageNumber));
@@ -476,14 +518,7 @@ public class EpubViewer extends AppCompatActivity {
 
     }
 
-    public void gotoPrevious() {
-        if (tts.isSpeaking()) {
-            tts.stop();
-        }
-        lastSentencereaded--;
-        readcurrent();
-    }
-
+    /*
     public void highlight_sentence(int x) {
         webView.evaluateJavascript("(function() { " +
                 "\tvar x = " + x + " ;\n" +
@@ -524,6 +559,16 @@ public class EpubViewer extends AppCompatActivity {
                 "  }\n" +
                 "  return ret;" +
                 " })();", s -> Log.d("LogName", s));
+    }
+    */
+    public void highlight_sentence(int x) {
+
+        readingwebView.loadUrl("javascript:highlight_sentence(" + x + ")");
+
+    }
+
+    public void remove_highlight_sentence(int x) {
+        readingwebView.loadUrl("javascript:remove_highlight(" + x + ")");
     }
 
     //Check Shared Preferences

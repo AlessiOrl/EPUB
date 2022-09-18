@@ -1,10 +1,13 @@
 package com.android.example.epub;
 
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.webkit.JavascriptInterface;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 class MyJavaScriptInterface {
     private String contentView;
@@ -27,7 +30,15 @@ class MyJavaScriptInterface {
     }
 
     private void setContentSentences() {
-        this.sentences = new ArrayList<>(Arrays.asList(this.contentView.split("\n")));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            List<String> list = new ArrayList<>();
+            for (String s : this.contentView.split("[\\n.]")) {
+                String replace = s.replace("\"", "\\\"");
+                list.add(replace);
+            }
+            this.sentences = new ArrayList<>(list);
+        }
+
     }
 
     public ArrayList<String> getContentSentences(){
