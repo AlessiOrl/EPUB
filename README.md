@@ -1,5 +1,4 @@
 # BookPub
-<p>BookPub: EPUB Reader - 2019 (Java) (Android App)</p>
 
 <h2>BookPub: EPUB Reader (Fast, Lite, Simple, Interactive and Open Source)</h2>
 <ul>
@@ -46,9 +45,7 @@
   </ul>
   <li>Jump between pages in a book with book content list or seek bar</li>
   <li>Shows current page name and percentage of pages you read in seek bar</li>
-  <li>Copy or share quotes or the whole page</li>
-  <li>Highlight quotes and save them into a text file (Every book has own quotes .txt file in phone memory)</li>
-  <li>Share or delete text files which contain quotes</li>
-  <li>Jump between highlighted quotes in a book</li>
   <li>Paging with scrolling (To show all EPUB content properly)</li>
+  <li> fast and user friendly TTS speark </li>
+  <li> usable hand gesture to control the reading process </li
 </ul>
