@@ -304,7 +304,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 sendEmail();
                 break;
             case R.id.nav_contact:
-                Intent intentContact = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/kalash2203"));
+                Intent intentContact = new Intent(Intent.ACTION_VIEW, Uri.parse(String.valueOf(R.string.githublink)));
                 startActivity(intentContact);
                 break;
             /*case R.id.nav_komik:
