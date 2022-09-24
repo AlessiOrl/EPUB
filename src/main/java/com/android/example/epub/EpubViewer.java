@@ -150,6 +150,7 @@ public class EpubViewer extends AppCompatActivity {
 
         webView = findViewById(R.id.custom_WebView);
         webView.getSettings().setJavaScriptEnabled(true);
+        webView.getSettings().setAllowFileAccess(true);
         webView.getSettings().setDefaultTextEncodingName("utf-8");
         webView.setGestureDetector(new GestureDetector(new CustomeGestureDetector()));
         webView.setOnTouchListener(new View.OnTouchListener() {
@@ -398,6 +399,7 @@ public class EpubViewer extends AppCompatActivity {
          */
         readingwebView = findViewById(R.id.read_WebView);
         readingwebView.getSettings().setJavaScriptEnabled(true);
+        readingwebView.getSettings().setAllowFileAccess(true);
         readingwebView.getSettings().setDefaultTextEncodingName("utf-8");
         readingwebView.setWebViewClient(new WebViewClient() {
             @Override
@@ -555,49 +557,7 @@ public class EpubViewer extends AppCompatActivity {
 
     }
 
-    /*
-    public void highlight_sentence(int x) {
-        webView.evaluateJavascript("(function() { " +
-                "\tvar x = " + x + " ;\n" +
-                "\tvar nodeList = document.body.children;\n" +
-                "  var check = true\n" +
-                "  var ret = -1\n" +
-                "  var i = 0\n" +
-                "  while (i < nodeList.length && check) \n" +
-                "  {\n" +
-                "    var selected = nodeList[i];\n" +
-                "    var tagname = selected.tagName.toLowerCase();\n" +
-                "  \tif (tagname == \"section\"){ \n" +
-                "    nodeList = selected.children;\n" +
-                "    check = false\n" +
-                "    }\n" +
-                "    i++\n" +
-                "  }\n" +
-                "  if (!check)\n" +
-                "  {\n" +
-                "    var aux_index = 0;\n" +
-                "\t\tfor (var i = 0; i < nodeList.length; i++) \n" +
-                "    {\n" +
-                "      var selected = nodeList[i];\n" +
-                "    \tvar tagname = selected.tagName.toLowerCase();\n" +
-                "       \n" +
-                "    \tif (tagname == \"p\") {\n" +
-                "      \tif (aux_index == x) \n" +
-                "        {\n" +
-                "      \t\tselected.classList.add(\"highlight\");\n" +
-                "          ret = 1;\n" +
-                "        } else \n" +
-                "        {\n" +
-                "        \tselected.classList.remove(\"highlight\");\n" +
-                "        }\n" +
-                "      \taux_index += 1;\n" +
-                "      } \n" +
-                "  \t}\n" +
-                "  }\n" +
-                "  return ret;" +
-                " })();", s -> Log.d("LogName", s));
-    }
-    */
+
     public void highlight_sentence(int x) {
 
         readingwebView.loadUrl("javascript:highlight_sentence(" + x + ")");
