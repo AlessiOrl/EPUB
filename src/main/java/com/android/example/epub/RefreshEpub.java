@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
@@ -126,7 +128,9 @@ public class RefreshEpub {
         }
     }
     public void FindEpub(File dir) throws IOException {
+        Log.i("DEBUG", String.valueOf(dir));
         File listFile[] = dir.listFiles();
+        System.out.println(Arrays.toString(listFile));
         if (listFile != null) {
             for (int i = 0; i < listFile.length; i++) {
                 if (listFile[i].isDirectory()) {

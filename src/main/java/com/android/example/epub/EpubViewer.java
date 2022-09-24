@@ -422,6 +422,43 @@ public class EpubViewer extends AppCompatActivity {
 
     }
 
+    //On Activity Stop
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
+    }
+    @Override
+    public void onBackPressed() {
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else if (drawer.isDrawerOpen(GravityCompat.END)) {
+            drawer.closeDrawer(GravityCompat.END);
+        } else {
+            stopReading();
+            super.onBackPressed();
+        }
+    }
+    @Override
+    public void onStop() {
+        finish();
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+
+
+        //Close the Text to Speech Library
+        if(tts != null) {
+
+            tts.stop();
+            tts.shutdown();
+            Log.d("TTS", "TTS Destroyed");
+        }
+        super.onDestroy();
+    }
+
     private void startReading() {
         lastSentencereaded = 0;
         webView.postDelayed(() -> {

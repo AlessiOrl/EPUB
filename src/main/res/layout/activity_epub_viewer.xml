@@ -142,7 +142,9 @@
             android:maxHeight="60dp"
             android:paddingStart="32dp"
             android:paddingEnd="32dp"
-            android:paddingBottom="8dp" />
+            android:paddingBottom="8dp"
+            android:progressTint="#902E5591"
+            android:thumbTint="@color/colorPrimary" />
 
         <TextView
             android:id="@+id/textViewPercent"

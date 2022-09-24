@@ -17,7 +17,10 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -58,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public static int REQUEST_PERMISSIONS = 1;
 
     private static MainActivity instance;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -94,16 +98,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         registerForContextMenu(recyclerView);
 
-        //Check Permission
-        if (!storagePermission()) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSIONS);
+        if (!checkPermission()) {
+            requestPermission();
         } else {
             ListBooksNCheckPreferences();
         }
-        
+
+
         //Handle Epub File on Storage
         try {
             Uri uri = getIntent().getData();
+
             if (uri != null) {
                 FindTitle findTitle = new FindTitle();
                 String path = getPath(context, uri);
@@ -124,10 +129,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             e.printStackTrace();
         }
     }
+
     public static MainActivity getInstance() {
         return instance;
     }
-    
+
     //Convert URI to Actual Path
     public static String getPath(final Context context, final Uri uri) {
 
@@ -190,6 +196,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         return null;
     }
+
     public static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
 
         Cursor cursor = null;
@@ -211,12 +218,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         return null;
     }
+
     public static boolean isExternalStorageDocument(Uri uri) {
         return "com.android.externalstorage.documents".equals(uri.getAuthority());
     }
+
     public static boolean isDownloadsDocument(Uri uri) {
         return "com.android.providers.downloads.documents".equals(uri.getAuthority());
     }
+
     public static boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
@@ -251,6 +261,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             customAdapter.refreshingDone(bookList);
         }
     }
+
     public void checkSharedPreferences() {
         if (sharedPreferences.getBoolean("keep_screen_on", false) == true) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -267,21 +278,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         }
     }
+
     @Override
     protected void onResume() {
         super.onResume();
-        if (storagePermission()) {
+        if (checkPermission()) {
             checkSharedPreferences();
         }
     }
 
+
     //Custom Shared Preferences
     public static final String myPref = "preferenceName";
+
     public String getFromPreferences(String key) {
         SharedPreferences sharedPreferences = getSharedPreferences(myPref, 0);
         String str = sharedPreferences.getString(key, "null");
         return str;
     }
+
     public void setToPreferences(String key, String thePreference) {
         SharedPreferences.Editor editor = getSharedPreferences(myPref, 0).edit();
         editor.putString(key, thePreference);
@@ -304,7 +319,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 sendEmail();
                 break;
             case R.id.nav_contact:
-                Intent intentContact = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/kalash2203"));
+                Intent intentContact = new Intent(Intent.ACTION_VIEW, Uri.parse(String.valueOf(R.string.githublink)));
                 startActivity(intentContact);
                 break;
             /*case R.id.nav_komik:
@@ -317,24 +332,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
-    private void sendEmail() {
-        Intent intent = new Intent(Intent.ACTION_SENDTO)
-                .setData(new Uri.Builder().scheme("mailto").build())
-                .putExtra(Intent.EXTRA_EMAIL, new String[]{"BookPub <kalashsonker9@gmail.com>"})
-                .putExtra(Intent.EXTRA_SUBJECT, "Feedback")
-                .putExtra(Intent.EXTRA_TEXT, "");
 
-        ComponentName emailApp = intent.resolveActivity(getPackageManager());
-        ComponentName unsupportedAction = ComponentName.unflattenFromString("com.android.fallback/.Fallback");
-        if (emailApp != null && !emailApp.equals(unsupportedAction))
-            try {
-                Intent chooser = Intent.createChooser(intent, "Send email with");
-                startActivity(chooser);
-                return;
-            } catch (ActivityNotFoundException ignored) {
-            }
+    private void sendEmail() {
         Toast.makeText(this, "Couldn't find an email app and account", Toast.LENGTH_LONG).show();
     }
+
     private void launchApp(String packageName) {
         Intent intent = getPackageManager().getLaunchIntentForPackage(packageName);
         if (intent != null) {
@@ -347,6 +349,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             startActivity(intent);
         }
     }
+
     @Override
     public void onBackPressed() {
         if (drawer.isDrawerOpen(GravityCompat.START)) {
@@ -391,6 +394,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
         return true;
     }
+
     //Menu Refresh, Sort, Show/Hide
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -398,7 +402,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             case R.id.refresh:
                 refreshEpub.new refreshBooks().execute();
                 return true;
-                
+
             case R.id.viewList:
                 recyclerView.setLayoutManager(new GridLayoutManager(this, 1));
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -470,7 +474,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         return super.onOptionsItemSelected(item);
     }
+
     Menu mainMenu;
+
     public void whichView(Menu mainMenu) {
         this.mainMenu = mainMenu;
         if (getFromPreferences("view").equals("viewGrid")) {
@@ -482,6 +488,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             mainMenu.findItem(R.id.viewGrid).setTitle(Html.fromHtml("<font color='black'>Grid View (2 Grid)</font>"));
         }
     }
+
     public void whichSort(Menu mainMenu) {
         this.mainMenu = mainMenu;
         if (getFromPreferences("sort").equals("sortAuthor")) {
@@ -507,6 +514,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             mainMenu.findItem(R.id.sortOpenTime).setTitle(Html.fromHtml("<font color='black'>Open Time</font>"));
         }
     }
+
     public void whichShowHide(Menu mainMenu) {
         this.mainMenu = mainMenu;
         if (getFromPreferences("showHideImportTime").equals("Invisible")) {
@@ -532,6 +540,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             inflater.inflate(R.menu.edit_book_context_menu, menu);
         }
     }
+
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -548,15 +557,30 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    //Check Storage Permission
-    public boolean storagePermission() {
-        return (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
+
+    private boolean checkPermission() {
+        return Environment.isExternalStorageManager();
+        //                    checkSharedPreferences();
     }
+
+    private void requestPermission() {
+        try {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+            intent.addCategory("android.intent.category.DEFAULT");
+            intent.setData(Uri.parse(String.format("package:%s", getApplicationContext().getPackageName())));
+            startActivityForResult(intent, 2296);
+        } catch (Exception e) {
+            Intent intent = new Intent();
+            intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+            startActivityForResult(intent, 2296);
+        }
+    }
+
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_PERMISSIONS) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 2296) {
+            if (Environment.isExternalStorageManager()) {
                 ListBooksNCheckPreferences();
             } else {
                 Toast.makeText(context, "Permission is not granted", Toast.LENGTH_LONG).show();
@@ -564,4 +588,5 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         }
     }
+
 }
