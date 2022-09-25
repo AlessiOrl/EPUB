@@ -1,7 +1,6 @@
 package com.android.example.epub;
 
 import android.os.Build;
-import android.support.annotation.RequiresApi;
 import android.webkit.JavascriptInterface;
 
 import java.util.ArrayList;

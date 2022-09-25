@@ -10,14 +10,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.NavigationView;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.preference.PreferenceManager;
-import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.TextUtils;
 import android.view.GestureDetector;
@@ -44,6 +36,16 @@ import java.util.Locale;
 import java.util.Objects;
 
 import android.util.Log;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.preference.PreferenceManager;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
 
 
 public class EpubViewer extends AppCompatActivity {
@@ -144,6 +146,8 @@ public class EpubViewer extends AppCompatActivity {
                 Log.i("TextToSpeech", "Initialization Failed");
             }
         });
+
+        tts.speak("THIS IS A TEST", TextToSpeech.QUEUE_FLUSH, null, null);
 
         /* An instance of this class will be registered as a JavaScript interface */
         //WebView
