@@ -144,7 +144,7 @@ public class EpubViewer extends AppCompatActivity {
         cameraInput = new CameraInput(this);
         cameraInput.setNewFrameListener(textureFrame -> hands.send(textureFrame));
         glSurfaceView.post(this::startCamera);
-        glSurfaceView.setVisibility(View.VISIBLE);
+        glSurfaceView.setVisibility(View.INVISIBLE);
         //Toolbar
         final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -534,7 +534,7 @@ public class EpubViewer extends AppCompatActivity {
         double wrist_tip_x = Math.abs(Math.floor((wrist.getX()-x_finger_tip) * 100) / 100);
         double wrist_start_y = Math.abs(Math.floor((wrist.getY()-y_finger_start) * 100) / 100);
         double wrist_tip_y = Math.abs(Math.floor((wrist.getY()-y_finger_tip) * 100) / 100);
-        return Math.abs(wrist_tip_x-wrist_start_x)+Math.abs(wrist_tip_y-wrist_start_y) < 0.1;
+        return Math.abs(wrist_tip_x-wrist_start_x)+Math.abs(wrist_tip_y-wrist_start_y) < 0.15;
     }
 
     private boolean is_open(LandmarkProto.NormalizedLandmark wrist, Double x_finger_start, Double y_finger_start, Double x_finger_tip, Double y_finger_tip, String finger) {
@@ -542,7 +542,7 @@ public class EpubViewer extends AppCompatActivity {
         double wrist_tip_x = Math.abs(Math.floor((wrist.getX()-x_finger_tip) * 100) / 100);
         double wrist_start_y = Math.abs(Math.floor((wrist.getY()-y_finger_start) * 100) / 100);
         double wrist_tip_y = Math.abs(Math.floor((wrist.getY()-y_finger_tip) * 100) / 100);
-        return Math.abs(wrist_tip_x-wrist_start_x)+Math.abs(wrist_tip_y-wrist_start_y) > 0.2;
+        return Math.abs(wrist_tip_x-wrist_start_x)+Math.abs(wrist_tip_y-wrist_start_y) > 0.3;
     }
 
     private void logLandmarks(HandsResult result, boolean showPixelValues) {
