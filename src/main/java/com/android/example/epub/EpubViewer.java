@@ -1,10 +1,13 @@
 package com.android.example.epub;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
@@ -21,6 +24,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -40,16 +44,26 @@ import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.camera.view.PreviewView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
+import com.google.mediapipe.formats.proto.LandmarkProto;
+import com.google.mediapipe.solutioncore.CameraInput;
+import com.google.mediapipe.solutioncore.SolutionGlSurfaceView;
+import com.google.mediapipe.solutions.hands.HandLandmark;
+import com.google.mediapipe.solutions.hands.Hands;
+import com.google.mediapipe.solutions.hands.HandsOptions;
+import com.google.mediapipe.solutions.hands.HandsResult;
 
 
 public class EpubViewer extends AppCompatActivity {
-
+    PreviewView previewView;
     Context context;
     SharedPreferences sharedPreferences;
     CustomWebView webView;
@@ -57,7 +71,7 @@ public class EpubViewer extends AppCompatActivity {
 
     String bookTitle;
     boolean searchViewLongClick = false;
-
+    int[] handStates = {-1,-1};
     SeekBar seekBar;
     FloatingActionButton start;
     FloatingActionButton stop;
@@ -84,20 +98,57 @@ public class EpubViewer extends AppCompatActivity {
     ArrayList<String> readableStrings;
     int lastSentencereaded;
 
+    private static final String TAG = "MainActivity";
+    private Hands hands;
+    // Run the pipeline and the model inference on GPU or CPU.
+    private static final boolean RUN_ON_GPU = true;
+
+    private enum InputSource {
+        UNKNOWN,
+        IMAGE,
+        VIDEO,
+        CAMERA,
+
+    }
+    private InputSource inputSource = InputSource.UNKNOWN;
+
+    private CameraInput cameraInput;
+
+    private SolutionGlSurfaceView<HandsResult> glSurfaceView;
+
+    public static void checkCameraPermissions(Context context){
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED)
+        {
+            // Permission is not granted
+
+            Log.d("checkCameraPermissions", "No Camera Permissions");
+            ActivityCompat.requestPermissions((Activity) context,
+                    new String[] { Manifest.permission.CAMERA },
+                    100);
+        }
+        else Log.d("checkCameraPermissions", "Permissions granted");
+    }
+
     @SuppressLint({"ClickableViewAccessibility", "JavascriptInterface"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_epub_viewer);
+        previewView = findViewById(R.id.previewView);
         context = getApplicationContext();
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 
-
+        checkCameraPermissions(this);
+        setupStreamingModePipeline(InputSource.CAMERA);
+        cameraInput = new CameraInput(this);
+        cameraInput.setNewFrameListener(textureFrame -> hands.send(textureFrame));
+        glSurfaceView.post(this::startCamera);
+        glSurfaceView.setVisibility(View.VISIBLE);
         //Toolbar
         final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
 
         path = getIntent().getStringExtra("path");
 
@@ -427,6 +478,202 @@ public class EpubViewer extends AppCompatActivity {
         });
 
     }
+
+    private void startCamera() {
+        cameraInput.start(
+                this,
+                hands.getGlContext(),
+                CameraInput.CameraFacing.FRONT,
+                glSurfaceView.getWidth(),
+                glSurfaceView.getHeight());
+        glSurfaceView.setVisibility(View.INVISIBLE);
+    }
+
+    private void setupStreamingModePipeline(InputSource inputSource) {
+        this.inputSource = inputSource;
+        // Initializes a new MediaPipe Hands solution instance in the streaming mode.
+        hands =
+                new Hands(
+                        this,
+                        HandsOptions.builder()
+                                .setStaticImageMode(false)
+                                .setMaxNumHands(1)
+                                .setRunOnGpu(RUN_ON_GPU)
+                                .build());
+        hands.setErrorListener((message, e) -> Log.e(TAG, "MediaPipe Hands error:" + message));
+        cameraInput = new CameraInput(this);
+        cameraInput.setNewFrameListener(textureFrame -> hands.send(textureFrame));
+        // Initializes a new Gl surface view with a user-defined HandsResultGlRenderer.
+        glSurfaceView =
+                new SolutionGlSurfaceView<>(this, hands.getGlContext(), hands.getGlMajorVersion());
+        glSurfaceView.setSolutionResultRenderer(new HandsResultGlRenderer());
+        glSurfaceView.setRenderInputImage(true);
+        hands.setResultListener(
+                handsResult -> {
+                    logLandmarks(handsResult, /*showPixelValues=*/ false);
+                    glSurfaceView.setRenderData(handsResult);
+                    glSurfaceView.requestRender();
+                });
+        // The runnable to start camera after the gl surface view is attached.
+        // For video input source, videoInput.start() will be called when the video uri is available.
+        if (inputSource == InputSource.CAMERA) {
+            glSurfaceView.post(this::startCamera);
+        }
+
+        // Updates the preview layout.
+        FrameLayout frameLayout = findViewById(R.id.previewView);
+        //imageView.setVisibility(View.GONE);
+        frameLayout.removeAllViewsInLayout();
+        frameLayout.addView(glSurfaceView);
+        glSurfaceView.setVisibility(View.INVISIBLE);
+        frameLayout.requestLayout();
+    }
+
+    private boolean is_closed(LandmarkProto.NormalizedLandmark wrist, Double x_finger_start, Double y_finger_start, Double x_finger_tip, Double y_finger_tip, String finger) {
+        double wrist_start_x = Math.abs(Math.floor((wrist.getX()-x_finger_start) * 100) / 100);
+        double wrist_tip_x = Math.abs(Math.floor((wrist.getX()-x_finger_tip) * 100) / 100);
+        double wrist_start_y = Math.abs(Math.floor((wrist.getY()-y_finger_start) * 100) / 100);
+        double wrist_tip_y = Math.abs(Math.floor((wrist.getY()-y_finger_tip) * 100) / 100);
+        return Math.abs(wrist_tip_x-wrist_start_x)+Math.abs(wrist_tip_y-wrist_start_y) < 0.1;
+    }
+
+    private boolean is_open(LandmarkProto.NormalizedLandmark wrist, Double x_finger_start, Double y_finger_start, Double x_finger_tip, Double y_finger_tip, String finger) {
+        double wrist_start_x = Math.abs(Math.floor((wrist.getX()-x_finger_start) * 100) / 100);
+        double wrist_tip_x = Math.abs(Math.floor((wrist.getX()-x_finger_tip) * 100) / 100);
+        double wrist_start_y = Math.abs(Math.floor((wrist.getY()-y_finger_start) * 100) / 100);
+        double wrist_tip_y = Math.abs(Math.floor((wrist.getY()-y_finger_tip) * 100) / 100);
+        return Math.abs(wrist_tip_x-wrist_start_x)+Math.abs(wrist_tip_y-wrist_start_y) > 0.2;
+    }
+
+    private void logLandmarks(HandsResult result, boolean showPixelValues) {
+
+        if (result.multiHandLandmarks().isEmpty()) {
+            System.out.println("NO LANDMARKS ");
+            return;
+        }
+        List<LandmarkProto.NormalizedLandmark> landmarks = result.multiHandLandmarks().get(0).getLandmarkList();
+        LandmarkProto.NormalizedLandmark wrist = landmarks.get(HandLandmark.WRIST);
+        LandmarkProto.NormalizedLandmark index_start = landmarks.get(HandLandmark.INDEX_FINGER_MCP);
+        LandmarkProto.NormalizedLandmark middle_start = landmarks.get(HandLandmark.MIDDLE_FINGER_MCP);
+        LandmarkProto.NormalizedLandmark ring_start = landmarks.get(HandLandmark.RING_FINGER_MCP);
+        LandmarkProto.NormalizedLandmark pinky_start = landmarks.get(HandLandmark.PINKY_MCP);
+        LandmarkProto.NormalizedLandmark index_tip = landmarks.get(HandLandmark.INDEX_FINGER_TIP);
+        LandmarkProto.NormalizedLandmark middle_tip = landmarks.get(HandLandmark.MIDDLE_FINGER_TIP);
+        LandmarkProto.NormalizedLandmark ring_tip = landmarks.get(HandLandmark.RING_FINGER_TIP);
+        LandmarkProto.NormalizedLandmark pinky_tip = landmarks.get(HandLandmark.PINKY_TIP);
+        LandmarkProto.NormalizedLandmark index_dip = landmarks.get(HandLandmark.INDEX_FINGER_DIP);
+        LandmarkProto.NormalizedLandmark middle_dip = landmarks.get(HandLandmark.MIDDLE_FINGER_DIP);
+        LandmarkProto.NormalizedLandmark ring_dip = landmarks.get(HandLandmark.RING_FINGER_DIP);
+        LandmarkProto.NormalizedLandmark pinky_dip = landmarks.get(HandLandmark.PINKY_DIP);
+        LandmarkProto.NormalizedLandmark thumb_tip = landmarks.get(HandLandmark.THUMB_TIP);
+
+        Double x_reference = (Math.abs(Math.floor(wrist.getX()-index_start.getX() * 100) / 100)+
+                Math.abs(Math.floor(wrist.getX()-middle_start.getX() * 100) / 100)+
+                Math.abs(Math.floor(wrist.getX()-ring_start.getX() * 100) / 100)+
+                Math.abs(Math.floor(wrist.getX()-pinky_start.getX() * 100) / 100))/4;
+        Double y_reference = (Math.abs(Math.floor(wrist.getY()-index_start.getY() * 100) / 100)+
+                Math.abs(Math.floor(wrist.getY()-middle_start.getY() * 100) / 100)+
+                Math.abs(Math.floor(wrist.getY()-ring_start.getY() * 100) / 100)+
+                Math.abs(Math.floor(wrist.getY()-pinky_start.getY() * 100) / 100))/4;
+
+
+        Double x_index_tip = index_tip.getX()/x_reference;
+        Double y_index_tip = index_tip.getY()/y_reference;
+        Double x_middle_tip = middle_tip.getX()/x_reference;
+        Double y_middle_tip = middle_tip.getY()/y_reference;
+        Double x_ring_tip = ring_tip.getX()/x_reference;
+        Double y_ring_tip = ring_tip.getY()/y_reference;
+        Double x_pinky_tip = pinky_tip.getX()/x_reference;
+        Double y_pinky_tip = pinky_tip.getY()/y_reference;
+        Double x_index_dip = index_dip.getX()/x_reference;
+        Double y_index_dip = index_dip.getY()/y_reference;
+        Double x_middle_dip = middle_dip.getX()/x_reference;
+        Double y_middle_dip = middle_dip.getY()/y_reference;
+        Double x_ring_dip = ring_dip.getX()/x_reference;
+        Double y_ring_dip = ring_dip.getY()/y_reference;
+        Double x_pinky_dip = pinky_dip.getX()/x_reference;
+        Double y_pinky_dip = pinky_dip.getY()/y_reference;
+        Double x_thumb_tip = thumb_tip.getX()/x_reference;
+        Double y_thumb_tip = thumb_tip.getY()/y_reference;
+        Double x_index_start = index_start.getX()/x_reference;
+        Double y_index_start = index_start.getY()/y_reference;
+        Double x_middle_start = middle_start.getX()/x_reference;
+        Double y_middle_start = middle_start.getY()/y_reference;
+        Double x_ring_start = ring_start.getX()/x_reference;
+        Double y_ring_start = ring_start.getY()/y_reference;
+        Double x_pinky_start = pinky_start.getX()/x_reference;
+        Double y_pinky_start = pinky_start.getY()/y_reference;
+
+
+
+        boolean hand_is_closed = is_closed(wrist,x_index_start,y_index_start, x_index_dip, y_index_dip, "INDEX") &&
+                is_closed(wrist,x_middle_start,y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE") &&
+                is_closed(wrist,x_ring_start, y_ring_start,x_ring_dip,y_ring_dip, "RING") &&
+                is_closed(wrist,x_pinky_start, y_pinky_start,x_pinky_dip, y_pinky_dip, "PINKY");
+
+
+        boolean hand_is_open = is_open(wrist,x_index_start,y_index_start, x_index_tip, y_index_tip, "INDEX") &&
+                is_open(wrist,x_middle_start,y_index_start, x_middle_tip, y_middle_tip, "MIDDLE") &&
+                is_open(wrist,x_ring_start, y_ring_start,x_ring_tip,y_ring_tip, "RING") &&
+                is_open(wrist,x_pinky_start, y_pinky_start,x_pinky_tip, y_pinky_tip, "PINKY");
+        // For Bitmaps, show the pixel values. For texture inputs, show the normalized coordinates.
+
+        if (hand_is_open){
+            Log.i(
+                    TAG,
+                    "Hand is OPEN");
+            runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    if (0 != handStates[1]) {
+
+                        if (handStates[0] == -1) start.performClick();
+                        else play.performClick();
+                        handStates[0] = handStates[1];
+                        handStates[1] = 0;
+                    }
+                }
+            });
+
+        }
+        if (hand_is_closed){
+            Log.i(
+                    TAG,
+                    "Hand is CLOSED");
+            runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+
+                    if (handStates[1] != 1) {
+                        handStates[0] = handStates[1];
+                        handStates[1] = 1;
+                        pause.performClick();
+                    }
+
+                }
+            });
+
+        }
+
+
+
+        if (result.multiHandWorldLandmarks().isEmpty()) {
+            return;
+        }
+        LandmarkProto.Landmark wristWorldLandmark =
+                result.multiHandWorldLandmarks().get(0).getLandmarkList().get(HandLandmark.WRIST);
+
+        Log.i(
+                TAG,
+                String.format(
+                        "MediaPipe Hand wrist world coordinates (in meters with the origin at the hand's"
+                                + " approximate geometric center): x=%f m, y=%f m, z=%f m",
+                        wristWorldLandmark.getX(), wristWorldLandmark.getY(), wristWorldLandmark.getZ()));
+    }
+
+
 
     //On Activity Stop
     @Override
