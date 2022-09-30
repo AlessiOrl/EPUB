@@ -129,6 +129,7 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.MyViewHold
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    if  (!refreshingDoneBool) return;
                     Intent intentEpubViewer = new Intent(context, EpubViewer.class);
                     intentEpubViewer.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intentEpubViewer.putExtra("title", bookList.get(getLayoutPosition()).get(0).toString());

@@ -689,9 +689,9 @@ public class EpubViewer extends AppCompatActivity {
 
             boolean back_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX",0.2) &&
                     x_index_start > x_index_tip &&
-                    is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE",closed_threshold+0.05) &&
-                    is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING",closed_threshold+0.05) &&
-                    is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY",closed_threshold+0.05);
+                    is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE",closed_threshold+0.3) &&
+                    is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING",closed_threshold+0.3) &&
+                    is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY",closed_threshold+0.3);
 
 
             if (hand_is_open) {
@@ -725,7 +725,7 @@ public class EpubViewer extends AppCompatActivity {
 
                     @Override
                     public void run() {
-                        if (commands.CLOSED != playbackState) {
+                        if (commands.CLOSED != playbackState && playbackState != commands.NULL) {
                             commandsQueue.add(0,commands.CLOSED);
                             if (commandsQueue.size() > 30) commandsQueue.remove(commandsQueue.size()-1);
                             if (Collections.frequency(commandsQueue,commands.CLOSED) >= 15){
@@ -791,9 +791,9 @@ public class EpubViewer extends AppCompatActivity {
 
             boolean[] open_fingers =
                     {is_open(wrist, x_index_start, y_index_start, x_index_tip, y_index_tip, "INDEX",open_threshold-0.02),
-                    is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE",open_threshold-0.02),
-                    is_open(wrist, x_ring_start, y_ring_start, x_ring_tip, y_ring_tip, "RING",open_threshold-0.02),
-                    is_open(wrist, x_pinky_start, y_pinky_start, x_pinky_tip, y_pinky_tip, "PINKY", open_threshold-0.02)};
+                            is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE",open_threshold-0.02),
+                            is_open(wrist, x_ring_start, y_ring_start, x_ring_tip, y_ring_tip, "RING",open_threshold-0.02),
+                            is_open(wrist, x_pinky_start, y_pinky_start, x_pinky_tip, y_pinky_tip, "PINKY", open_threshold-0.02)};
             int sum = 0;
             for(boolean b : open_fingers) {
                 sum += b ? 1 : 0;
@@ -809,16 +809,16 @@ public class EpubViewer extends AppCompatActivity {
                     commandsQueue.add(0,num2command.get(finalSum));
                     if (commandsQueue.size() > 45) commandsQueue.remove(commandsQueue.size()-1);
                     if (commandsQueue.size() >=45)
-                    if (Collections.frequency(commandsQueue,num2command.get(finalSum)) >= 30){
-                        for (int i = 0; i < finalSum; i++){
-                            if (playbackState == commands.POINT_RIGHT) readNextChapter();
-                            else if (playbackState == commands.POINT_LEFT) readPreviousChapter();
-                    }
+                        if (Collections.frequency(commandsQueue,num2command.get(finalSum)) >= 30){
+                            for (int i = 0; i < finalSum; i++){
+                                if (playbackState == commands.POINT_RIGHT) readNextChapter();
+                                else if (playbackState == commands.POINT_LEFT) readPreviousChapter();
+                            }
 
-                        commandsQueue.clear();
-                        play.performClick();
-                        playbackState = commands.OPEN;
-                    }
+                            commandsQueue.clear();
+                            play.performClick();
+                            playbackState = commands.OPEN;
+                        }
 
                 }
             });
