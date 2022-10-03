@@ -683,12 +683,14 @@ public class EpubViewer extends AppCompatActivity {
 
             boolean forward_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX",0.2) &&
                     x_index_start < x_index_tip &&
-                    is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE",closed_threshold+0.2) &&
-                    is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING",closed_threshold+0.2) &&
-                    is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY",closed_threshold+0.2);
+                    Math.abs(y_index_start-y_index_tip) < 0.1 &&
+                    is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE",closed_threshold+0.3) &&
+                    is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING",closed_threshold+0.3) &&
+                    is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY",closed_threshold+0.3);
 
             boolean back_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX",0.2) &&
                     x_index_start > x_index_tip &&
+                    Math.abs(y_index_start-y_index_tip) < 0.1 &&
                     is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE",closed_threshold+0.3) &&
                     is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING",closed_threshold+0.3) &&
                     is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY",closed_threshold+0.3);
@@ -747,8 +749,9 @@ public class EpubViewer extends AppCompatActivity {
                         if (commands.POINT_RIGHT != playbackState) {
                             commandsQueue.add(0,commands.POINT_RIGHT);
                             if (commandsQueue.size() > 30) commandsQueue.remove(commandsQueue.size()-1);
-                            if (Collections.frequency(commandsQueue,commands.POINT_RIGHT) >= 10){
-                                pause.performClick();
+                            if (Collections.frequency(commandsQueue,commands.POINT_RIGHT) >= 20){
+                                //pause.performClick();
+                                stopReading(false);
                                 playbackState = commands.POINT_RIGHT;
                                 tts.speak("Select how many chapters you want to skip", TextToSpeech.QUEUE_FLUSH, null, null);
                                 commandsQueue.clear();
@@ -771,8 +774,9 @@ public class EpubViewer extends AppCompatActivity {
                         if (commands.POINT_LEFT != playbackState) {
                             commandsQueue.add(0,commands.POINT_LEFT);
                             if (commandsQueue.size() > 30) commandsQueue.remove(commandsQueue.size()-1);
-                            if (Collections.frequency(commandsQueue,commands.POINT_LEFT) >= 10){
-                                pause.performClick();
+                            if (Collections.frequency(commandsQueue,commands.POINT_LEFT) >= 20){
+                                //pause.performClick();
+                                stopReading(false);
                                 playbackState = commands.POINT_LEFT;
                                 tts.speak("Select how many chapters you want to get back to", TextToSpeech.QUEUE_FLUSH, null, null);
                                 commandsQueue.clear();
@@ -790,10 +794,10 @@ public class EpubViewer extends AppCompatActivity {
         else {
 
             boolean[] open_fingers =
-                    {is_open(wrist, x_index_start, y_index_start, x_index_tip, y_index_tip, "INDEX",open_threshold-0.02),
-                            is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE",open_threshold-0.02),
-                            is_open(wrist, x_ring_start, y_ring_start, x_ring_tip, y_ring_tip, "RING",open_threshold-0.02),
-                            is_open(wrist, x_pinky_start, y_pinky_start, x_pinky_tip, y_pinky_tip, "PINKY", open_threshold-0.02)};
+                    {is_open(wrist, x_index_start, y_index_start, x_index_tip, y_index_tip, "INDEX",open_threshold-0.1),
+                            is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE",open_threshold-0.1),
+                            is_open(wrist, x_ring_start, y_ring_start, x_ring_tip, y_ring_tip, "RING",open_threshold-0.1),
+                            is_open(wrist, x_pinky_start, y_pinky_start, x_pinky_tip, y_pinky_tip, "PINKY", open_threshold-0.1)};
             int sum = 0;
             for(boolean b : open_fingers) {
                 sum += b ? 1 : 0;
@@ -807,16 +811,17 @@ public class EpubViewer extends AppCompatActivity {
                 @Override
                 public void run() {
                     commandsQueue.add(0,num2command.get(finalSum));
-                    if (commandsQueue.size() > 45) commandsQueue.remove(commandsQueue.size()-1);
-                    if (commandsQueue.size() >=45)
-                        if (Collections.frequency(commandsQueue,num2command.get(finalSum)) >= 30){
+                    if (commandsQueue.size() > 30) commandsQueue.remove(commandsQueue.size()-1);
+                    if (commandsQueue.size() >=30)
+                        if (Collections.frequency(commandsQueue,num2command.get(finalSum)) >= 25){
                             for (int i = 0; i < finalSum; i++){
                                 if (playbackState == commands.POINT_RIGHT) readNextChapter();
                                 else if (playbackState == commands.POINT_LEFT) readPreviousChapter();
                             }
 
                             commandsQueue.clear();
-                            play.performClick();
+                            //stop.performClick();
+                            start.performClick();
                             playbackState = commands.OPEN;
                         }
 
@@ -921,15 +926,21 @@ public class EpubViewer extends AppCompatActivity {
         }
     }
 
-    public void stopReading() {
+    public void stopReading(boolean updatevisibility) {
         if (tts.isSpeaking()) {
             tts.stop();
             remove_highlight_sentence(lastSentencereaded);
             lastSentencereaded = 0;
         }
-        webView.setVisibility(View.VISIBLE);
-        readingwebView.setVisibility(View.GONE);
+        if (updatevisibility) {
+            webView.setVisibility(View.VISIBLE);
+            readingwebView.setVisibility(View.GONE);
+        }
 
+    }
+
+    public void stopReading() {
+        this.stopReading(true);
     }
 
     public void gotoNext() {
