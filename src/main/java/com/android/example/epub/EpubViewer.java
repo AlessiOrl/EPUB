@@ -673,14 +673,20 @@ public class EpubViewer extends AppCompatActivity {
                     is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold) &&
                     is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold) &&
                     is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold);
-
+            hand_is_closed = y_index_dip > y_index_start &&
+                    y_middle_dip > y_middle_start &&
+                    y_ring_dip > y_ring_start &&
+                    y_pinky_dip > y_pinky_start;
 
             boolean hand_is_open = is_open(wrist, x_index_start, y_index_start, x_index_tip, y_index_tip, "INDEX", open_threshold) &&
                     is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE", open_threshold) &&
                     is_open(wrist, x_ring_start, y_ring_start, x_ring_tip, y_ring_tip, "RING", open_threshold) &&
                     is_open(wrist, x_pinky_start, y_pinky_start, x_pinky_tip, y_pinky_tip, "PINKY", open_threshold);
             // For Bitmaps, show the pixel values. For texture inputs, show the normalized coordinates.
-
+            hand_is_open = y_index_dip <= y_index_start &&
+                    y_middle_dip <= y_middle_start &&
+                    y_ring_dip <= y_ring_start &&
+                    y_pinky_dip <= y_pinky_start;
             boolean forward_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX",0.2) &&
                     x_index_start < x_index_tip &&
                     Math.abs(y_index_start-y_index_tip) < 0.1 &&
@@ -695,8 +701,56 @@ public class EpubViewer extends AppCompatActivity {
                     is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING",closed_threshold+0.3) &&
                     is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY",closed_threshold+0.3);
 
+            if (forward_to) {
 
-            if (hand_is_open) {
+                runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        if (commands.POINT_RIGHT != playbackState && commands.NULL != playbackState) {
+                            commandsQueue.add(0,commands.POINT_RIGHT);
+                            if (commandsQueue.size() > 30) commandsQueue.remove(commandsQueue.size()-1);
+                            if (Collections.frequency(commandsQueue,commands.POINT_RIGHT) >= 20){
+                                //pause.performClick();
+                                stopReading(false);
+                                playbackState = commands.POINT_RIGHT;
+                                tts.speak("Select how many chapters you want to skip", TextToSpeech.QUEUE_FLUSH, null, null);
+                                commandsQueue.clear();
+                            }
+
+                        }
+
+                    }
+                });
+
+
+                //TimeUnit.SECONDS.sleep(3);
+
+            }
+            else if (back_to) {
+                runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        if (commands.POINT_LEFT != playbackState && commands.NULL != playbackState) {
+                            commandsQueue.add(0,commands.POINT_LEFT);
+                            if (commandsQueue.size() > 30) commandsQueue.remove(commandsQueue.size()-1);
+                            if (Collections.frequency(commandsQueue,commands.POINT_LEFT) >= 20){
+                                //pause.performClick();
+                                stopReading(false);
+                                playbackState = commands.POINT_LEFT;
+                                tts.speak("Select how many chapters you want to get back to", TextToSpeech.QUEUE_FLUSH, null, null);
+                                commandsQueue.clear();
+                            }
+
+                        }
+                    }
+                });
+
+
+                //TimeUnit.SECONDS.sleep(3);
+            }
+            else if (hand_is_open) {
                 Log.i(
                         TAG,
                         "Hand is OPEN");
@@ -740,55 +794,7 @@ public class EpubViewer extends AppCompatActivity {
                 });
 
             }
-            else if (forward_to) {
 
-                runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (commands.POINT_RIGHT != playbackState) {
-                            commandsQueue.add(0,commands.POINT_RIGHT);
-                            if (commandsQueue.size() > 30) commandsQueue.remove(commandsQueue.size()-1);
-                            if (Collections.frequency(commandsQueue,commands.POINT_RIGHT) >= 20){
-                                //pause.performClick();
-                                stopReading(false);
-                                playbackState = commands.POINT_RIGHT;
-                                tts.speak("Select how many chapters you want to skip", TextToSpeech.QUEUE_FLUSH, null, null);
-                                commandsQueue.clear();
-                            }
-
-                        }
-
-                    }
-                });
-
-
-                //TimeUnit.SECONDS.sleep(3);
-
-            }
-            else if (back_to) {
-                runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (commands.POINT_LEFT != playbackState) {
-                            commandsQueue.add(0,commands.POINT_LEFT);
-                            if (commandsQueue.size() > 30) commandsQueue.remove(commandsQueue.size()-1);
-                            if (Collections.frequency(commandsQueue,commands.POINT_LEFT) >= 20){
-                                //pause.performClick();
-                                stopReading(false);
-                                playbackState = commands.POINT_LEFT;
-                                tts.speak("Select how many chapters you want to get back to", TextToSpeech.QUEUE_FLUSH, null, null);
-                                commandsQueue.clear();
-                            }
-
-                        }
-                    }
-                });
-
-
-                //TimeUnit.SECONDS.sleep(3);
-            }
 
         }
         else {
@@ -811,9 +817,9 @@ public class EpubViewer extends AppCompatActivity {
                 @Override
                 public void run() {
                     commandsQueue.add(0,num2command.get(finalSum));
-                    if (commandsQueue.size() > 30) commandsQueue.remove(commandsQueue.size()-1);
-                    if (commandsQueue.size() >=30)
-                        if (Collections.frequency(commandsQueue,num2command.get(finalSum)) >= 25){
+                    if (commandsQueue.size() > 60) commandsQueue.remove(commandsQueue.size()-1);
+                    if (commandsQueue.size() >=60 )
+                        if (Collections.frequency(commandsQueue,num2command.get(finalSum)) >= 55){
                             for (int i = 0; i < finalSum; i++){
                                 if (playbackState == commands.POINT_RIGHT) readNextChapter();
                                 else if (playbackState == commands.POINT_LEFT) readPreviousChapter();
@@ -823,6 +829,7 @@ public class EpubViewer extends AppCompatActivity {
                             //stop.performClick();
                             start.performClick();
                             playbackState = commands.OPEN;
+                            commandsQueue.clear();
                         }
 
                 }
