@@ -39,7 +39,8 @@
             <androidx.camera.view.PreviewView
                 android:id="@+id/previewView"
                 android:layout_width="match_parent"
-                android:layout_height="615dp" />
+                android:layout_height="615dp"
+                tools:visibility="gone" />
         </com.android.example.epub.CustomWebView>
 
     </LinearLayout>

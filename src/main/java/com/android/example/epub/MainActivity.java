@@ -90,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         //RecyclerView
         recyclerView = (RecyclerView) findViewById(R.id.custom_RecylerView);
+
         customAdapter = new CustomAdapter(context, bookList);
         recyclerView.setAdapter(customAdapter);
         if (getFromPreferences("view").equals("viewGrid")) {
@@ -98,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             recyclerView.setLayoutManager(new GridLayoutManager(this, 1));
         }
         registerForContextMenu(recyclerView);
-
+        recyclerView.setAlpha(0);
         if (!checkPermission()) {
             requestPermission();
         } else {
@@ -129,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } catch (Exception e) {
             e.printStackTrace();
         }
+        recyclerView.setAlpha(1);
     }
 
     public static MainActivity getInstance() {

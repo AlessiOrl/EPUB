@@ -50,6 +50,8 @@
         <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.1785" />
         <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.1785" />
         <entry key="..\:/Users/orlan/StudioProjects/EPUB/src/main/res/xml/preferences.xml" value="0.358695652173913" />
+        <entry key="src/main/res/layout/activity_epub_viewer.xml" value="0.54375" />
+        <entry key="src/main/res/layout/activity_main.xml" value="0.54375" />
       </map>
     </option>
   </component>
