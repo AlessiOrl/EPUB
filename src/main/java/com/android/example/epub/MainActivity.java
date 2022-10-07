@@ -78,12 +78,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         navigationView.setNavigationItemSelectedListener(this);
         navigationView.setCheckedItem(R.id.nav_library);
         navigationView.getMenu().getItem(1).setCheckable(false);
-        navigationView.getMenu().getItem(2).setCheckable(false);
-        navigationView.getMenu().getItem(3).setCheckable(false);
-        //navigationView.getMenu().getItem(4).setCheckable(false);
-        //navigationView.getMenu().getItem(5).setCheckable(false);
-        //navigationView.getMenu().getItem(4).setTitle(Html.fromHtml("<font color='#008577'>Komik: Comics Reader</font>"));
-        //navigationView.getMenu().getItem(5).setTitle(Html.fromHtml("<font color='#008577'>Leaf: PDF Reader</font>"));
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
@@ -318,19 +312,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 intentMainSettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intentMainSettings);
                 break;
-            case R.id.nav_feedback:
-                sendEmail();
-                break;
-            case R.id.nav_contact:
-                Intent intentContact = new Intent(Intent.ACTION_VIEW, Uri.parse(String.valueOf(R.string.githublink)));
-                startActivity(intentContact);
-                break;
-            /*case R.id.nav_komik:
-                launchApp("com.github.onursert.komik");
-                break;
-            case R.id.nav_leaf:
-                launchApp("com.github.onursert.leaf");
-                break;*/
         }
         drawer.closeDrawer(GravityCompat.START);
         return true;

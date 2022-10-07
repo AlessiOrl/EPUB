@@ -25,15 +25,5 @@ public class MainSettingsFragment extends PreferenceFragmentCompat {
                 return true;
             }
         });
-
-        Preference preferencePicasso = findPreference("picasso");
-        preferencePicasso.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/square/picasso/blob/master/LICENSE.txt"));
-                startActivity(browserIntent);
-                return true;
-            }
-        });
     }
 }

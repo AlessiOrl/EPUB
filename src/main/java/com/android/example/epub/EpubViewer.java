@@ -80,6 +80,7 @@ public class EpubViewer extends AppCompatActivity {
 
     String bookTitle;
     boolean searchViewLongClick = false;
+
     private enum commands {
         NULL,
         OPEN,
@@ -92,28 +93,33 @@ public class EpubViewer extends AppCompatActivity {
         NUMBER3,
         NUMBER4
     }
-    List<Enum> commandsQueue = new ArrayList<Enum>(Arrays.asList(commands.NULL,commands.NULL));
-    static Map<Integer,Enum> num2command;
+
+    List<Enum> commandsQueue = new ArrayList<Enum>(Arrays.asList(commands.NULL, commands.NULL));
+    static Map<Integer, Enum> num2command;
+
     static {
         num2command = new HashMap<>();
         num2command.put(0, commands.NUMBER0);
         num2command.put(1, commands.NUMBER1);
         num2command.put(2, commands.NUMBER2);
-        num2command.put(3,commands.NUMBER3);
-        num2command.put(4,commands.NUMBER4);
+        num2command.put(3, commands.NUMBER3);
+        num2command.put(4, commands.NUMBER4);
     }
+
     public static Map<String, Integer> commandsMap;
+
     static {
         commandsMap = new HashMap<>();
         commandsMap.put("open", 0);
         commandsMap.put("closed", 1);
-        commandsMap.put("point right",2);
+        commandsMap.put("point right", 2);
         commandsMap.put("point left", 3);
-        commandsMap.put("number 1",11);
-        commandsMap.put("number 2",22);
-        commandsMap.put("number 3",33);
-        commandsMap.put("number 4",44);
+        commandsMap.put("number 1", 11);
+        commandsMap.put("number 2", 22);
+        commandsMap.put("number 3", 33);
+        commandsMap.put("number 4", 44);
     }
+
     Enum playbackState = commands.NULL;         //-1=has to start, 0=started, 1=paused, 2=selecting chapters to skip
     SeekBar seekBar;
     FloatingActionButton start;
@@ -153,24 +159,23 @@ public class EpubViewer extends AppCompatActivity {
         CAMERA,
 
     }
+
     private InputSource inputSource = InputSource.UNKNOWN;
 
     private CameraInput cameraInput;
 
     private SolutionGlSurfaceView<HandsResult> glSurfaceView;
 
-    public static void checkCameraPermissions(Context context){
+    public static void checkCameraPermissions(Context context) {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED)
-        {
+                != PackageManager.PERMISSION_GRANTED) {
             // Permission is not granted
 
             Log.d("checkCameraPermissions", "No Camera Permissions");
             ActivityCompat.requestPermissions((Activity) context,
-                    new String[] { Manifest.permission.CAMERA },
+                    new String[]{Manifest.permission.CAMERA},
                     100);
-        }
-        else Log.d("checkCameraPermissions", "Permissions granted");
+        } else Log.d("checkCameraPermissions", "Permissions granted");
     }
 
     @SuppressLint({"ClickableViewAccessibility", "JavascriptInterface"})
@@ -178,20 +183,24 @@ public class EpubViewer extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_epub_viewer);
-        previewView = findViewById(R.id.previewView);
-        fist = findViewById(R.id.fist);
-        open_hand = findViewById(R.id.open_hand);
-        point_right = findViewById(R.id.point_right);
-        point_left = findViewById(R.id.point_left);
         context = getApplicationContext();
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 
-        checkCameraPermissions(this);
-        setupStreamingModePipeline(InputSource.CAMERA);
-        cameraInput = new CameraInput(this);
-        cameraInput.setNewFrameListener(textureFrame -> hands.send(textureFrame));
-        glSurfaceView.post(this::startCamera);
-        glSurfaceView.setVisibility(View.INVISIBLE);
+        if (sharedPreferences.getBoolean("use_gesture", false)) {
+            previewView = findViewById(R.id.previewView);
+            fist = findViewById(R.id.fist);
+            open_hand = findViewById(R.id.open_hand);
+            point_right = findViewById(R.id.point_right);
+            point_left = findViewById(R.id.point_left);
+            checkCameraPermissions(this);
+            setupStreamingModePipeline(InputSource.CAMERA);
+            cameraInput = new CameraInput(this);
+            cameraInput.setNewFrameListener(textureFrame -> hands.send(textureFrame));
+            glSurfaceView.post(this::startCamera);
+            glSurfaceView.setVisibility(View.INVISIBLE);
+        }
+
+
         //Toolbar
         final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -245,8 +254,6 @@ public class EpubViewer extends AppCompatActivity {
             }
         });
 
-        tts.speak("THIS IS A TEST", TextToSpeech.QUEUE_FLUSH, null, null);
-
         /* An instance of this class will be registered as a JavaScript interface */
         //WebView
 
@@ -290,15 +297,14 @@ public class EpubViewer extends AppCompatActivity {
                 return false;
             }
         });
+
         webView.setWebViewClient(new WebViewClient() {
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (!sharedPreferences.getBoolean("built_in_web_browser", false) == true) {
-                    if (url != null && (url.startsWith("http://") || url.startsWith("https://"))) {
-                        view.getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                        return true;
-                    }
+                if (url != null && (url.startsWith("http://") || url.startsWith("https://"))) {
+                    view.getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                    return true;
                 }
                 return false;
             }
@@ -386,7 +392,7 @@ public class EpubViewer extends AppCompatActivity {
             for (FloatingActionButton mediabutton : mediabuttons) {
                 mediabutton.show();
             }
-
+            playbackState = commands.OPEN;
             startReading();
         });
         stop.setOnClickListener(view -> {
@@ -394,16 +400,20 @@ public class EpubViewer extends AppCompatActivity {
                 mediabutton.hide();
             }
             start.show();
+            playbackState = commands.NULL;
             stopReading();
         });
         play.setOnClickListener(view -> {
             pause.show();
             play.hide();
+            playbackState = commands.OPEN;
             resumeReading();
         });
         pause.setOnClickListener(view -> {
             play.show();
             pause.hide();
+
+            playbackState = commands.CLOSED;
             pauseReading();
         });
         ff.setOnClickListener(view -> {
@@ -581,40 +591,40 @@ public class EpubViewer extends AppCompatActivity {
     }
 
     private boolean is_closed(LandmarkProto.NormalizedLandmark wrist, Double x_finger_start, Double y_finger_start, Double x_finger_tip, Double y_finger_tip, String finger, Double threshold) {
-        double wrist_start_x = Math.abs(Math.floor((wrist.getX()-x_finger_start) * 100) / 100);
-        double wrist_tip_x = Math.abs(Math.floor((wrist.getX()-x_finger_tip) * 100) / 100);
-        double wrist_start_y = Math.abs(Math.floor((wrist.getY()-y_finger_start) * 100) / 100);
-        double wrist_tip_y = Math.abs(Math.floor((wrist.getY()-y_finger_tip) * 100) / 100);
+        double wrist_start_x = Math.abs(Math.floor((wrist.getX() - x_finger_start) * 100) / 100);
+        double wrist_tip_x = Math.abs(Math.floor((wrist.getX() - x_finger_tip) * 100) / 100);
+        double wrist_start_y = Math.abs(Math.floor((wrist.getY() - y_finger_start) * 100) / 100);
+        double wrist_tip_y = Math.abs(Math.floor((wrist.getY() - y_finger_tip) * 100) / 100);
         System.out.println(finger);
-        System.out.println("wrist start x "+wrist_start_x+" wrist tip x "+wrist_tip_x);
-        System.out.println("wrist start y "+wrist_start_y+" wrist tip y "+wrist_tip_y);
-        return Math.abs(wrist_tip_x-wrist_start_x)+Math.abs(wrist_tip_y-wrist_start_y) < threshold;
+        System.out.println("wrist start x " + wrist_start_x + " wrist tip x " + wrist_tip_x);
+        System.out.println("wrist start y " + wrist_start_y + " wrist tip y " + wrist_tip_y);
+        return Math.abs(wrist_tip_x - wrist_start_x) + Math.abs(wrist_tip_y - wrist_start_y) < threshold;
     }
 
     private boolean is_open(LandmarkProto.NormalizedLandmark wrist, Double x_finger_start, Double y_finger_start, Double x_finger_tip, Double y_finger_tip, String finger, Double threshold) {
-        double wrist_start_x = Math.abs(Math.floor((wrist.getX()-x_finger_start) * 100) / 100);
-        double wrist_tip_x = Math.abs(Math.floor((wrist.getX()-x_finger_tip) * 100) / 100);
-        double wrist_start_y = Math.abs(Math.floor((wrist.getY()-y_finger_start) * 100) / 100);
-        double wrist_tip_y = Math.abs(Math.floor((wrist.getY()-y_finger_tip) * 100) / 100);
+        double wrist_start_x = Math.abs(Math.floor((wrist.getX() - x_finger_start) * 100) / 100);
+        double wrist_tip_x = Math.abs(Math.floor((wrist.getX() - x_finger_tip) * 100) / 100);
+        double wrist_start_y = Math.abs(Math.floor((wrist.getY() - y_finger_start) * 100) / 100);
+        double wrist_tip_y = Math.abs(Math.floor((wrist.getY() - y_finger_tip) * 100) / 100);
         //System.out.println(finger);
         //System.out.println("wrist start x "+wrist_start_x+" wrist tip x "+wrist_tip_x);
         //System.out.println("wrist start y "+wrist_start_y+" wrist tip y "+wrist_tip_y);
-        return Math.abs(wrist_tip_x-wrist_start_x)+Math.abs(wrist_tip_y-wrist_start_y) > threshold;
+        return Math.abs(wrist_tip_x - wrist_start_x) + Math.abs(wrist_tip_y - wrist_start_y) > threshold;
     }
 
-    private boolean point_right(LandmarkProto.NormalizedLandmark wrist, Double x_finger_start, Double y_finger_start, Double x_finger_tip, Double y_finger_tip){
-        double wrist_start_x = wrist.getX()-x_finger_start;
-        double wrist_tip_x = wrist.getX()-x_finger_tip;
-        double wrist_start_y = wrist.getY()-y_finger_start;
-        double wrist_tip_y = wrist.getY()-y_finger_tip;
+    private boolean point_right(LandmarkProto.NormalizedLandmark wrist, Double x_finger_start, Double y_finger_start, Double x_finger_tip, Double y_finger_tip) {
+        double wrist_start_x = wrist.getX() - x_finger_start;
+        double wrist_tip_x = wrist.getX() - x_finger_tip;
+        double wrist_start_y = wrist.getY() - y_finger_start;
+        double wrist_tip_y = wrist.getY() - y_finger_tip;
         //System.out.println(wrist.getX()+" wrist x coordinate\n"+x_finger_start+" finger start x coordinate\n"+x_finger_tip+" finger tip x coordinate");
         //System.out.println(wrist.getY()+" wrist y coordinate\n"+y_finger_start+" finger start y coordinate\n"+y_finger_tip+" finger tip y coordinate");
         return false;
     }
 
     private void logLandmarks(HandsResult result, boolean showPixelValues) throws InterruptedException {
-        System.out.println(playbackState+" PLAYBACK STATE");
-        System.out.println("QUEUE "+commandsQueue);
+        System.out.println(playbackState + " PLAYBACK STATE");
+        System.out.println("QUEUE " + commandsQueue);
         if (result.multiHandLandmarks().isEmpty()) {
             System.out.println("NO LANDMARKS ");
             return;
@@ -636,49 +646,49 @@ public class EpubViewer extends AppCompatActivity {
         LandmarkProto.NormalizedLandmark pinky_dip = landmarks.get(HandLandmark.PINKY_DIP);
         LandmarkProto.NormalizedLandmark thumb_tip = landmarks.get(HandLandmark.THUMB_TIP);
 
-        Double x_reference = (Math.abs(Math.floor(wrist.getX()-index_start.getX() * 100) / 100)+
-                Math.abs(Math.floor(wrist.getX()-middle_start.getX() * 100) / 100)+
-                Math.abs(Math.floor(wrist.getX()-ring_start.getX() * 100) / 100)+
-                Math.abs(Math.floor(wrist.getX()-pinky_start.getX() * 100) / 100))/4;
-        Double y_reference = (Math.abs(Math.floor(wrist.getY()-index_start.getY() * 100) / 100)+
-                Math.abs(Math.floor(wrist.getY()-middle_start.getY() * 100) / 100)+
-                Math.abs(Math.floor(wrist.getY()-ring_start.getY() * 100) / 100)+
-                Math.abs(Math.floor(wrist.getY()-pinky_start.getY() * 100) / 100))/4;
+        Double x_reference = (Math.abs(Math.floor(wrist.getX() - index_start.getX() * 100) / 100) +
+                Math.abs(Math.floor(wrist.getX() - middle_start.getX() * 100) / 100) +
+                Math.abs(Math.floor(wrist.getX() - ring_start.getX() * 100) / 100) +
+                Math.abs(Math.floor(wrist.getX() - pinky_start.getX() * 100) / 100)) / 4;
+        Double y_reference = (Math.abs(Math.floor(wrist.getY() - index_start.getY() * 100) / 100) +
+                Math.abs(Math.floor(wrist.getY() - middle_start.getY() * 100) / 100) +
+                Math.abs(Math.floor(wrist.getY() - ring_start.getY() * 100) / 100) +
+                Math.abs(Math.floor(wrist.getY() - pinky_start.getY() * 100) / 100)) / 4;
 
 
-        Double x_index_tip = index_tip.getX()/x_reference;
-        Double y_index_tip = index_tip.getY()/y_reference;
-        Double x_middle_tip = middle_tip.getX()/x_reference;
-        Double y_middle_tip = middle_tip.getY()/y_reference;
-        Double x_ring_tip = ring_tip.getX()/x_reference;
-        Double y_ring_tip = ring_tip.getY()/y_reference;
-        Double x_pinky_tip = pinky_tip.getX()/x_reference;
-        Double y_pinky_tip = pinky_tip.getY()/y_reference;
-        Double x_index_dip = index_dip.getX()/x_reference;
-        Double y_index_dip = index_dip.getY()/y_reference;
-        Double x_middle_dip = middle_dip.getX()/x_reference;
-        Double y_middle_dip = middle_dip.getY()/y_reference;
-        Double x_ring_dip = ring_dip.getX()/x_reference;
-        Double y_ring_dip = ring_dip.getY()/y_reference;
-        Double x_pinky_dip = pinky_dip.getX()/x_reference;
-        Double y_pinky_dip = pinky_dip.getY()/y_reference;
-        Double x_thumb_tip = thumb_tip.getX()/x_reference;
-        Double y_thumb_tip = thumb_tip.getY()/y_reference;
-        Double x_thumb_start = thumb_start.getX()/x_reference;
-        Double y_thumb_start = thumb_start.getY()/y_reference;
-        Double x_index_start = index_start.getX()/x_reference;
-        Double y_index_start = index_start.getY()/y_reference;
-        Double x_middle_start = middle_start.getX()/x_reference;
-        Double y_middle_start = middle_start.getY()/y_reference;
-        Double x_ring_start = ring_start.getX()/x_reference;
-        Double y_ring_start = ring_start.getY()/y_reference;
-        Double x_pinky_start = pinky_start.getX()/x_reference;
-        Double y_pinky_start = pinky_start.getY()/y_reference;
+        Double x_index_tip = index_tip.getX() / x_reference;
+        Double y_index_tip = index_tip.getY() / y_reference;
+        Double x_middle_tip = middle_tip.getX() / x_reference;
+        Double y_middle_tip = middle_tip.getY() / y_reference;
+        Double x_ring_tip = ring_tip.getX() / x_reference;
+        Double y_ring_tip = ring_tip.getY() / y_reference;
+        Double x_pinky_tip = pinky_tip.getX() / x_reference;
+        Double y_pinky_tip = pinky_tip.getY() / y_reference;
+        Double x_index_dip = index_dip.getX() / x_reference;
+        Double y_index_dip = index_dip.getY() / y_reference;
+        Double x_middle_dip = middle_dip.getX() / x_reference;
+        Double y_middle_dip = middle_dip.getY() / y_reference;
+        Double x_ring_dip = ring_dip.getX() / x_reference;
+        Double y_ring_dip = ring_dip.getY() / y_reference;
+        Double x_pinky_dip = pinky_dip.getX() / x_reference;
+        Double y_pinky_dip = pinky_dip.getY() / y_reference;
+        Double x_thumb_tip = thumb_tip.getX() / x_reference;
+        Double y_thumb_tip = thumb_tip.getY() / y_reference;
+        Double x_thumb_start = thumb_start.getX() / x_reference;
+        Double y_thumb_start = thumb_start.getY() / y_reference;
+        Double x_index_start = index_start.getX() / x_reference;
+        Double y_index_start = index_start.getY() / y_reference;
+        Double x_middle_start = middle_start.getX() / x_reference;
+        Double y_middle_start = middle_start.getY() / y_reference;
+        Double x_ring_start = ring_start.getX() / x_reference;
+        Double y_ring_start = ring_start.getY() / y_reference;
+        Double x_pinky_start = pinky_start.getX() / x_reference;
+        Double y_pinky_start = pinky_start.getY() / y_reference;
 
         Double closed_threshold = 0.15;
         Double open_threshold = 0.3;
         if (playbackState != commands.POINT_RIGHT && playbackState != commands.POINT_LEFT) {
-            boolean hand_is_closed = is_closed(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX",closed_threshold) &&
+            boolean hand_is_closed = is_closed(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX", closed_threshold) &&
                     is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold) &&
                     is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold) &&
                     is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold);
@@ -696,19 +706,19 @@ public class EpubViewer extends AppCompatActivity {
                     y_middle_dip <= y_middle_start &&
                     y_ring_dip <= y_ring_start &&
                     y_pinky_dip <= y_pinky_start;
-            boolean forward_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX",0.2) &&
+            boolean forward_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX", 0.2) &&
                     x_index_start < x_index_tip &&
-                    Math.abs(y_index_start-y_index_tip) < 0.1 &&
-                    is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE",closed_threshold+0.3) &&
-                    is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING",closed_threshold+0.3) &&
-                    is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY",closed_threshold+0.3);
+                    Math.abs(y_index_start - y_index_tip) < 0.1 &&
+                    is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold + 0.3) &&
+                    is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold + 0.3) &&
+                    is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold + 0.3);
 
-            boolean back_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX",0.2) &&
+            boolean back_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX", 0.2) &&
                     x_index_start > x_index_tip &&
-                    Math.abs(y_index_start-y_index_tip) < 0.1 &&
-                    is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE",closed_threshold+0.3) &&
-                    is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING",closed_threshold+0.3) &&
-                    is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY",closed_threshold+0.3);
+                    Math.abs(y_index_start - y_index_tip) < 0.1 &&
+                    is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold + 0.3) &&
+                    is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold + 0.3) &&
+                    is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold + 0.3);
 
             if (forward_to) {
 
@@ -717,9 +727,10 @@ public class EpubViewer extends AppCompatActivity {
                     @Override
                     public void run() {
                         if (commands.POINT_RIGHT != playbackState && commands.NULL != playbackState) {
-                            commandsQueue.add(0,commands.POINT_RIGHT);
-                            if (commandsQueue.size() > 30) commandsQueue.remove(commandsQueue.size()-1);
-                            if (Collections.frequency(commandsQueue,commands.POINT_RIGHT) >= 20){
+                            commandsQueue.add(0, commands.POINT_RIGHT);
+                            if (commandsQueue.size() > 30)
+                                commandsQueue.remove(commandsQueue.size() - 1);
+                            if (Collections.frequency(commandsQueue, commands.POINT_RIGHT) >= 20) {
                                 //pause.performClick();
                                 fist.setVisibility(View.INVISIBLE);
                                 open_hand.setVisibility(View.INVISIBLE);
@@ -739,16 +750,16 @@ public class EpubViewer extends AppCompatActivity {
 
                 //TimeUnit.SECONDS.sleep(3);
 
-            }
-            else if (back_to) {
+            } else if (back_to) {
                 runOnUiThread(new Runnable() {
 
                     @Override
                     public void run() {
                         if (commands.POINT_LEFT != playbackState && commands.NULL != playbackState) {
-                            commandsQueue.add(0,commands.POINT_LEFT);
-                            if (commandsQueue.size() > 30) commandsQueue.remove(commandsQueue.size()-1);
-                            if (Collections.frequency(commandsQueue,commands.POINT_LEFT) >= 20){
+                            commandsQueue.add(0, commands.POINT_LEFT);
+                            if (commandsQueue.size() > 30)
+                                commandsQueue.remove(commandsQueue.size() - 1);
+                            if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= 20) {
                                 //pause.performClick();
                                 fist.setVisibility(View.INVISIBLE);
                                 open_hand.setVisibility(View.INVISIBLE);
@@ -766,8 +777,7 @@ public class EpubViewer extends AppCompatActivity {
 
 
                 //TimeUnit.SECONDS.sleep(3);
-            }
-            else if (hand_is_open) {
+            } else if (hand_is_open) {
                 Log.i(
                         TAG,
                         "Hand is OPEN");
@@ -776,10 +786,11 @@ public class EpubViewer extends AppCompatActivity {
                     @Override
                     public void run() {
                         if (commands.OPEN != playbackState) {
-                            commandsQueue.add(0,commands.OPEN);
-                            if (commandsQueue.size() > 30) commandsQueue.remove(commandsQueue.size()-1);
+                            commandsQueue.add(0, commands.OPEN);
+                            if (commandsQueue.size() > 30)
+                                commandsQueue.remove(commandsQueue.size() - 1);
 
-                            if (Collections.frequency(commandsQueue,commands.OPEN) >= 15){
+                            if (Collections.frequency(commandsQueue, commands.OPEN) >= 15) {
                                 fist.setVisibility(View.INVISIBLE);
                                 open_hand.setVisibility(View.VISIBLE);
                                 point_left.setVisibility(View.INVISIBLE);
@@ -794,8 +805,7 @@ public class EpubViewer extends AppCompatActivity {
                     }
                 });
 
-            }
-            else if (hand_is_closed) {
+            } else if (hand_is_closed) {
                 Log.i(
                         TAG,
                         "Hand is CLOSED");
@@ -804,9 +814,10 @@ public class EpubViewer extends AppCompatActivity {
                     @Override
                     public void run() {
                         if (commands.CLOSED != playbackState && playbackState != commands.NULL) {
-                            commandsQueue.add(0,commands.CLOSED);
-                            if (commandsQueue.size() > 30) commandsQueue.remove(commandsQueue.size()-1);
-                            if (Collections.frequency(commandsQueue,commands.CLOSED) >= 15){
+                            commandsQueue.add(0, commands.CLOSED);
+                            if (commandsQueue.size() > 30)
+                                commandsQueue.remove(commandsQueue.size() - 1);
+                            if (Collections.frequency(commandsQueue, commands.CLOSED) >= 15) {
                                 fist.setVisibility(View.VISIBLE);
                                 open_hand.setVisibility(View.INVISIBLE);
                                 point_left.setVisibility(View.INVISIBLE);
@@ -823,36 +834,36 @@ public class EpubViewer extends AppCompatActivity {
             }
 
 
-        }
-        else {
+        } else {
 
             boolean[] open_fingers =
-                    {is_open(wrist, x_index_start, y_index_start, x_index_tip, y_index_tip, "INDEX",open_threshold-0.05),
-                            is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE",open_threshold),
-                            is_open(wrist, x_ring_start, y_ring_start, x_ring_tip, y_ring_tip, "RING",open_threshold),
+                    {is_open(wrist, x_index_start, y_index_start, x_index_tip, y_index_tip, "INDEX", open_threshold - 0.05),
+                            is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE", open_threshold),
+                            is_open(wrist, x_ring_start, y_ring_start, x_ring_tip, y_ring_tip, "RING", open_threshold),
                             is_open(wrist, x_pinky_start, y_pinky_start, x_pinky_tip, y_pinky_tip, "PINKY", open_threshold)};
             int sum = 0;
-            for(boolean b : open_fingers) {
+            for (boolean b : open_fingers) {
                 sum += b ? 1 : 0;
             }
 
-            System.out.println(sum+" OPEN FINGERS");
+            System.out.println(sum + " OPEN FINGERS");
 
             int finalSum = sum;
             runOnUiThread(new Runnable() {
 
                 @Override
                 public void run() {
-                    commandsQueue.add(0,num2command.get(finalSum));
-                    if (commandsQueue.size() > 45) commandsQueue.remove(commandsQueue.size()-1);
-                    if (commandsQueue.size() == 45 )
-                        if (Collections.frequency(commandsQueue,num2command.get(finalSum)) >= 35){
+                    commandsQueue.add(0, num2command.get(finalSum));
+                    if (commandsQueue.size() > 45) commandsQueue.remove(commandsQueue.size() - 1);
+                    if (commandsQueue.size() == 45)
+                        if (Collections.frequency(commandsQueue, num2command.get(finalSum)) >= 35) {
 
                             if (playbackState == commands.POINT_RIGHT)
-                                if (pageNumber+finalSum <= pages.size()) readNextChapter(finalSum);
-                                else readNextChapter(pages.size()-pageNumber-1);
+                                if (pageNumber + finalSum <= pages.size())
+                                    readNextChapter(finalSum);
+                                else readNextChapter(pages.size() - pageNumber - 1);
                             else if (playbackState == commands.POINT_LEFT)
-                                if (pageNumber-finalSum >= 0) readPreviousChapter(finalSum);
+                                if (pageNumber - finalSum >= 0) readPreviousChapter(finalSum);
                                 else readPreviousChapter(pageNumber);
                             fist.setVisibility(View.INVISIBLE);
                             open_hand.setVisibility(View.VISIBLE);
@@ -888,13 +899,13 @@ public class EpubViewer extends AppCompatActivity {
     }
 
 
-
     //On Activity Stop
     @Override
     public boolean onSupportNavigateUp() {
         finish();
         return true;
     }
+
     @Override
     public void onBackPressed() {
         if (drawer.isDrawerOpen(GravityCompat.START)) {
@@ -906,6 +917,7 @@ public class EpubViewer extends AppCompatActivity {
             super.onBackPressed();
         }
     }
+
     @Override
     public void onStop() {
         finish();
@@ -914,10 +926,8 @@ public class EpubViewer extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-
-
         //Close the Text to Speech Library
-        if(tts != null) {
+        if (tts != null) {
 
             tts.stop();
             tts.shutdown();
@@ -985,26 +995,34 @@ public class EpubViewer extends AppCompatActivity {
         this.stopReading(true);
     }
 
-    public void gotoNext() {
+    public void gotoNext(int x) {
         if (tts.isSpeaking()) {
             tts.stop();
         }
         remove_highlight_sentence(lastSentencereaded);
 
-        lastSentencereaded++;
+        lastSentencereaded += x;
         readcurrent();
+    }
 
+    public void gotoPrevious(int x) {
+        if (tts.isSpeaking()) {
+            tts.stop();
+        }
+        remove_highlight_sentence(lastSentencereaded);
+
+        lastSentencereaded -= x;
+        readcurrent();
     }
 
     public void gotoPrevious() {
-        if (tts.isSpeaking()) {
-            tts.stop();
-        }
-        remove_highlight_sentence(lastSentencereaded);
-
-        lastSentencereaded--;
-        readcurrent();
+        this.gotoPrevious(1);
     }
+
+    public void gotoNext() {
+        this.gotoNext(1);
+    }
+
 
     public void readNextChapter(int x) {
 
@@ -1099,7 +1117,6 @@ public class EpubViewer extends AppCompatActivity {
         whichLineHeight(menu);
         whichMargin(menu);
         whichTheme(menu);
-        whichHighlight(menu);
         webView.postDelayed(() -> webView.reload(), 150);
 
         MenuItem menuItem = menu.findItem(R.id.action_search);
@@ -1289,14 +1306,6 @@ public class EpubViewer extends AppCompatActivity {
                 setToPreferences("themefront", "DimGrey");
                 whichTheme(mainMenu);
                 return true;
-            case R.id.highlighton:
-                setToPreferences("highlight", "on");
-                whichHighlight(mainMenu);
-                return true;
-            case R.id.highlightoff:
-                setToPreferences("highlight", "off");
-                whichHighlight(mainMenu);
-                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -1392,19 +1401,6 @@ public class EpubViewer extends AppCompatActivity {
             mainMenu.findItem(R.id.normal_style).setTitle(Html.fromHtml("<font color='black'>Normal</font>"));
             mainMenu.findItem(R.id.italic).setTitle(Html.fromHtml("<font color='black'>Italic</font>"));
             mainMenu.findItem(R.id.default_style).setTitle(Html.fromHtml("<font color='#008577'>Default</font>"));
-        }
-        webView.reload();
-    }
-
-    public void whichHighlight(Menu mainMenu) {
-        this.mainMenu = mainMenu;
-        if (getFromPreferences("highlight").equals("off")) {
-            mainMenu.findItem(R.id.highlighton).setTitle(Html.fromHtml("<font color='black'>On</font>"));
-            mainMenu.findItem(R.id.highlightoff).setTitle(Html.fromHtml("<font color='#008577'>Off</font>"));
-        } else {
-            setToPreferences("highlight", "on");
-            mainMenu.findItem(R.id.highlighton).setTitle(Html.fromHtml("<font color='#008577'>On</font>"));
-            mainMenu.findItem(R.id.highlightoff).setTitle(Html.fromHtml("<font color='black'>Off</font>"));
         }
         webView.reload();
     }

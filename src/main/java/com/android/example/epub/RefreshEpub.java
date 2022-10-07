@@ -129,7 +129,6 @@ public class RefreshEpub {
     }
     public void FindEpub(File dir) throws IOException {
         File listFile[] = dir.listFiles();
-        System.out.println(Arrays.toString(listFile));
         if (listFile != null) {
             for (int i = 0; i < listFile.length; i++) {
                 if (listFile[i].isDirectory()) {
