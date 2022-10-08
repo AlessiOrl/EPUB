@@ -32,10 +32,13 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -94,12 +97,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         registerForContextMenu(recyclerView);
         recyclerView.setAlpha(0);
-        if (!checkPermission()) {
-            requestPermission();
-        } else {
-            ListBooksNCheckPreferences();
-        }
 
+        //Check permissions
+
+        //Check Permission
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!checkPermission()) {
+                requestPermission();
+            } else {
+                ListBooksNCheckPreferences();
+            }
+        } else {
+            if (!storagePermission()) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSIONS);
+            } else {
+                ListBooksNCheckPreferences();
+            }
+        }
 
         //Handle Epub File on Storage
         try {
@@ -134,10 +150,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     //Convert URI to Actual Path
     public static String getPath(final Context context, final Uri uri) {
 
-        final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
 
         // DocumentProvider
-        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+        if (DocumentsContract.isDocumentUri(context, uri)) {
             // ExternalStorageProvider
             if (isExternalStorageDocument(uri)) {
                 final String docId = DocumentsContract.getDocumentId(uri);
@@ -245,6 +260,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             sharedPreferences.edit().putBoolean("where_i_left", true).commit();
             sharedPreferences.edit().putBoolean("built_in_web_browser", true).commit();
             sharedPreferences.edit().putBoolean("firstrun", false).commit();
+            sharedPreferences.edit().putBoolean("use_reading", true).commit();
         }
         checkAutoSync();
         checkSharedPreferences();
@@ -279,11 +295,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override
     protected void onResume() {
         super.onResume();
-        if (checkPermission()) {
-            checkSharedPreferences();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (checkPermission()) {
+                checkSharedPreferences();
+            }
+        } else {
+            if (storagePermission()) {
+                checkSharedPreferences();
+            }
         }
     }
 
+    //Check Storage Permission
+    public boolean storagePermission() {
+        return (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
+    }
 
     //Custom Shared Preferences
     public static final String myPref = "preferenceName";
@@ -542,6 +569,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     private boolean checkPermission() {
         return Environment.isExternalStorageManager();
         //                    checkSharedPreferences();
@@ -560,6 +588,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -572,5 +601,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         }
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_PERMISSIONS) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                ListBooksNCheckPreferences();
+            } else {
+                Toast.makeText(context, "Permission is not granted", Toast.LENGTH_LONG).show();
+                finish();
+            }
+        }
+    }
+
 
 }

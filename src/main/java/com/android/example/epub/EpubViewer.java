@@ -15,7 +15,6 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.text.Html;
 import android.text.TextUtils;
-import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -49,78 +48,23 @@ import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
-import androidx.camera.view.PreviewView;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
-import com.google.mediapipe.formats.proto.LandmarkProto;
-import com.google.mediapipe.solutioncore.CameraInput;
-import com.google.mediapipe.solutioncore.SolutionGlSurfaceView;
-import com.google.mediapipe.solutions.hands.HandLandmark;
-import com.google.mediapipe.solutions.hands.Hands;
-import com.google.mediapipe.solutions.hands.HandsOptions;
-import com.google.mediapipe.solutions.hands.HandsResult;
 
 
 public class EpubViewer extends AppCompatActivity {
-    PreviewView previewView;
     Context context;
     SharedPreferences sharedPreferences;
     CustomWebView webView;
     WebView readingwebView;
-    ImageView fist;
-    ImageView open_hand;
-    ImageView point_right;
-    ImageView point_left;
 
     String bookTitle;
     boolean searchViewLongClick = false;
 
-    private enum commands {
-        NULL,
-        OPEN,
-        CLOSED,
-        POINT_RIGHT,
-        POINT_LEFT,
-        NUMBER0,
-        NUMBER1,
-        NUMBER2,
-        NUMBER3,
-        NUMBER4
-    }
-
-    List<Enum> commandsQueue = new ArrayList<Enum>(Arrays.asList(commands.NULL, commands.NULL));
-    static Map<Integer, Enum> num2command;
-
-    static {
-        num2command = new HashMap<>();
-        num2command.put(0, commands.NUMBER0);
-        num2command.put(1, commands.NUMBER1);
-        num2command.put(2, commands.NUMBER2);
-        num2command.put(3, commands.NUMBER3);
-        num2command.put(4, commands.NUMBER4);
-    }
-
-    public static Map<String, Integer> commandsMap;
-
-    static {
-        commandsMap = new HashMap<>();
-        commandsMap.put("open", 0);
-        commandsMap.put("closed", 1);
-        commandsMap.put("point right", 2);
-        commandsMap.put("point left", 3);
-        commandsMap.put("number 1", 11);
-        commandsMap.put("number 2", 22);
-        commandsMap.put("number 3", 33);
-        commandsMap.put("number 4", 44);
-    }
-
-    Enum playbackState = commands.NULL;         //-1=has to start, 0=started, 1=paused, 2=selecting chapters to skip
     SeekBar seekBar;
     FloatingActionButton start;
     FloatingActionButton stop;
@@ -148,35 +92,6 @@ public class EpubViewer extends AppCompatActivity {
     int lastSentencereaded;
 
     private static final String TAG = "MainActivity";
-    private Hands hands;
-    // Run the pipeline and the model inference on GPU or CPU.
-    private static final boolean RUN_ON_GPU = true;
-
-    private enum InputSource {
-        UNKNOWN,
-        IMAGE,
-        VIDEO,
-        CAMERA,
-
-    }
-
-    private InputSource inputSource = InputSource.UNKNOWN;
-
-    private CameraInput cameraInput;
-
-    private SolutionGlSurfaceView<HandsResult> glSurfaceView;
-
-    public static void checkCameraPermissions(Context context) {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-            // Permission is not granted
-
-            Log.d("checkCameraPermissions", "No Camera Permissions");
-            ActivityCompat.requestPermissions((Activity) context,
-                    new String[]{Manifest.permission.CAMERA},
-                    100);
-        } else Log.d("checkCameraPermissions", "Permissions granted");
-    }
 
     @SuppressLint({"ClickableViewAccessibility", "JavascriptInterface"})
     @Override
@@ -185,21 +100,6 @@ public class EpubViewer extends AppCompatActivity {
         setContentView(R.layout.activity_epub_viewer);
         context = getApplicationContext();
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-
-        if (sharedPreferences.getBoolean("use_gesture", false)) {
-            previewView = findViewById(R.id.previewView);
-            fist = findViewById(R.id.fist);
-            open_hand = findViewById(R.id.open_hand);
-            point_right = findViewById(R.id.point_right);
-            point_left = findViewById(R.id.point_left);
-            checkCameraPermissions(this);
-            setupStreamingModePipeline(InputSource.CAMERA);
-            cameraInput = new CameraInput(this);
-            cameraInput.setNewFrameListener(textureFrame -> hands.send(textureFrame));
-            glSurfaceView.post(this::startCamera);
-            glSurfaceView.setVisibility(View.INVISIBLE);
-        }
-
 
         //Toolbar
         final Toolbar toolbar = findViewById(R.id.toolbar);
@@ -261,7 +161,6 @@ public class EpubViewer extends AppCompatActivity {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setAllowFileAccess(true);
         webView.getSettings().setDefaultTextEncodingName("utf-8");
-        webView.setGestureDetector(new GestureDetector(new CustomeGestureDetector()));
         webView.setOnTouchListener(new View.OnTouchListener() {
             private static final int MAX_CLICK_DURATION = 60;
             private long startClickTime;
@@ -297,7 +196,6 @@ public class EpubViewer extends AppCompatActivity {
                 return false;
             }
         });
-
         webView.setWebViewClient(new WebViewClient() {
 
             @Override
@@ -373,55 +271,13 @@ public class EpubViewer extends AppCompatActivity {
 
         //Seekbar
         final TextView textViewPercent = findViewById(R.id.textViewPercent);
+        final TextView textViewPage = findViewById(R.id.textViewPage);
+
         seekBar = findViewById(R.id.seekBar);
         seekBar.setMax(100);
         seekBar.setPadding(100, 0, 100, 0);
 
-        start = findViewById(R.id.FAB_start);
-        stop = findViewById(R.id.FAB_stop);
-        play = findViewById(R.id.FAB_play);
-        pause = findViewById(R.id.FAB_pause);
-        ff = findViewById(R.id.FAB_forward);
-        rew = findViewById(R.id.FAB_rew);
-        final FloatingActionButton[] mediabuttons = {ff, play, pause, stop, rew};
 
-
-        start.setOnClickListener(view -> {
-
-            start.hide();
-            for (FloatingActionButton mediabutton : mediabuttons) {
-                mediabutton.show();
-            }
-            playbackState = commands.OPEN;
-            startReading();
-        });
-        stop.setOnClickListener(view -> {
-            for (FloatingActionButton mediabutton : mediabuttons) {
-                mediabutton.hide();
-            }
-            start.show();
-            playbackState = commands.NULL;
-            stopReading();
-        });
-        play.setOnClickListener(view -> {
-            pause.show();
-            play.hide();
-            playbackState = commands.OPEN;
-            resumeReading();
-        });
-        pause.setOnClickListener(view -> {
-            play.show();
-            pause.hide();
-
-            playbackState = commands.CLOSED;
-            pauseReading();
-        });
-        ff.setOnClickListener(view -> {
-            gotoNext();
-        });
-        rew.setOnClickListener(view -> {
-            gotoPrevious();
-        });
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int progress;
 
@@ -509,392 +365,84 @@ public class EpubViewer extends AppCompatActivity {
                 /*
         MEDIA SECTION
          */
-        readingwebView = findViewById(R.id.read_WebView);
-        readingwebView.getSettings().setJavaScriptEnabled(true);
-        readingwebView.getSettings().setAllowFileAccess(true);
-        readingwebView.getSettings().setDefaultTextEncodingName("utf-8");
-        readingwebView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                return false;
-            }
+        start = findViewById(R.id.FAB_start);
+        if (sharedPreferences.getBoolean("use_reading", false)) {
+            start.setVisibility(View.VISIBLE);
+            start.setClickable(true);
+            stop = findViewById(R.id.FAB_stop);
+            play = findViewById(R.id.FAB_play);
+            pause = findViewById(R.id.FAB_pause);
+            ff = findViewById(R.id.FAB_forward);
+            rew = findViewById(R.id.FAB_rew);
+            final FloatingActionButton[] mediabuttons = {ff, play, pause, stop, rew};
 
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
+            start.setOnClickListener(view -> {
 
-                String subtitle = readableStrings.get(0);
-                String title = readableStrings.get(1);
-                String lyrics = "[\"" + TextUtils.join("\" , \"", readableStrings.subList(2, readableStrings.size())) + "\"]";
-                int hindex = lastSentencereaded;
+                start.hide();
+                for (FloatingActionButton mediabutton : mediabuttons) {
+                    mediabutton.show();
+                }
+                seekBar.setVisibility(View.GONE);
+                textViewPercent.setVisibility(View.GONE);
+                textViewPage.setVisibility(View.GONE);
+                startReading();
+            });
+            stop.setOnClickListener(view -> {
+                for (FloatingActionButton mediabutton : mediabuttons) {
+                    mediabutton.hide();
+                }
+                seekBar.setVisibility(View.VISIBLE);
+                textViewPercent.setVisibility(View.VISIBLE);
+                textViewPage.setVisibility(View.VISIBLE);
+                start.show();
+                stopReading();
+            });
+            play.setOnClickListener(view -> {
+                pause.show();
+                play.hide();
+                resumeReading();
+            });
+            pause.setOnClickListener(view -> {
+                play.show();
+                pause.hide();
 
-                String data = "{ author: '" + title + "' , song: '" + subtitle + "' , albumart: '" + "', lyrics: " + lyrics + ", highlight_index: " + hindex + " }";
+                pauseReading();
+            });
+            ff.setOnClickListener(view -> {
+                gotoNext();
+            });
+            rew.setOnClickListener(view -> {
+                gotoPrevious();
+            });
 
-                readingwebView.loadUrl("javascript:loadSong(" + data + ")");
-            }
-        });
-
-    }
-
-    private void startCamera() {
-        cameraInput.start(
-                this,
-                hands.getGlContext(),
-                CameraInput.CameraFacing.FRONT,
-                glSurfaceView.getWidth(),
-                glSurfaceView.getHeight());
-        glSurfaceView.setVisibility(View.INVISIBLE);
-    }
-
-    private void setupStreamingModePipeline(InputSource inputSource) {
-        this.inputSource = inputSource;
-        // Initializes a new MediaPipe Hands solution instance in the streaming mode.
-        hands =
-                new Hands(
-                        this,
-                        HandsOptions.builder()
-                                .setStaticImageMode(false)
-                                .setMaxNumHands(1)
-                                .setRunOnGpu(RUN_ON_GPU)
-                                .build());
-        hands.setErrorListener((message, e) -> Log.e(TAG, "MediaPipe Hands error:" + message));
-        cameraInput = new CameraInput(this);
-        cameraInput.setNewFrameListener(textureFrame -> hands.send(textureFrame));
-        // Initializes a new Gl surface view with a user-defined HandsResultGlRenderer.
-        glSurfaceView =
-                new SolutionGlSurfaceView<>(this, hands.getGlContext(), hands.getGlMajorVersion());
-        glSurfaceView.setSolutionResultRenderer(new HandsResultGlRenderer());
-        glSurfaceView.setRenderInputImage(true);
-        hands.setResultListener(
-                handsResult -> {
-                    try {
-                        logLandmarks(handsResult, /*showPixelValues=*/ false);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    glSurfaceView.setRenderData(handsResult);
-                    glSurfaceView.requestRender();
-                });
-        // The runnable to start camera after the gl surface view is attached.
-        // For video input source, videoInput.start() will be called when the video uri is available.
-        if (inputSource == InputSource.CAMERA) {
-            glSurfaceView.post(this::startCamera);
-        }
-
-        // Updates the preview layout.
-        FrameLayout frameLayout = findViewById(R.id.previewView);
-        //imageView.setVisibility(View.GONE);
-        frameLayout.removeAllViewsInLayout();
-        frameLayout.addView(glSurfaceView);
-        glSurfaceView.setVisibility(View.INVISIBLE);
-        frameLayout.requestLayout();
-    }
-
-    private boolean is_closed(LandmarkProto.NormalizedLandmark wrist, Double x_finger_start, Double y_finger_start, Double x_finger_tip, Double y_finger_tip, String finger, Double threshold) {
-        double wrist_start_x = Math.abs(Math.floor((wrist.getX() - x_finger_start) * 100) / 100);
-        double wrist_tip_x = Math.abs(Math.floor((wrist.getX() - x_finger_tip) * 100) / 100);
-        double wrist_start_y = Math.abs(Math.floor((wrist.getY() - y_finger_start) * 100) / 100);
-        double wrist_tip_y = Math.abs(Math.floor((wrist.getY() - y_finger_tip) * 100) / 100);
-        System.out.println(finger);
-        System.out.println("wrist start x " + wrist_start_x + " wrist tip x " + wrist_tip_x);
-        System.out.println("wrist start y " + wrist_start_y + " wrist tip y " + wrist_tip_y);
-        return Math.abs(wrist_tip_x - wrist_start_x) + Math.abs(wrist_tip_y - wrist_start_y) < threshold;
-    }
-
-    private boolean is_open(LandmarkProto.NormalizedLandmark wrist, Double x_finger_start, Double y_finger_start, Double x_finger_tip, Double y_finger_tip, String finger, Double threshold) {
-        double wrist_start_x = Math.abs(Math.floor((wrist.getX() - x_finger_start) * 100) / 100);
-        double wrist_tip_x = Math.abs(Math.floor((wrist.getX() - x_finger_tip) * 100) / 100);
-        double wrist_start_y = Math.abs(Math.floor((wrist.getY() - y_finger_start) * 100) / 100);
-        double wrist_tip_y = Math.abs(Math.floor((wrist.getY() - y_finger_tip) * 100) / 100);
-        //System.out.println(finger);
-        //System.out.println("wrist start x "+wrist_start_x+" wrist tip x "+wrist_tip_x);
-        //System.out.println("wrist start y "+wrist_start_y+" wrist tip y "+wrist_tip_y);
-        return Math.abs(wrist_tip_x - wrist_start_x) + Math.abs(wrist_tip_y - wrist_start_y) > threshold;
-    }
-
-    private boolean point_right(LandmarkProto.NormalizedLandmark wrist, Double x_finger_start, Double y_finger_start, Double x_finger_tip, Double y_finger_tip) {
-        double wrist_start_x = wrist.getX() - x_finger_start;
-        double wrist_tip_x = wrist.getX() - x_finger_tip;
-        double wrist_start_y = wrist.getY() - y_finger_start;
-        double wrist_tip_y = wrist.getY() - y_finger_tip;
-        //System.out.println(wrist.getX()+" wrist x coordinate\n"+x_finger_start+" finger start x coordinate\n"+x_finger_tip+" finger tip x coordinate");
-        //System.out.println(wrist.getY()+" wrist y coordinate\n"+y_finger_start+" finger start y coordinate\n"+y_finger_tip+" finger tip y coordinate");
-        return false;
-    }
-
-    private void logLandmarks(HandsResult result, boolean showPixelValues) throws InterruptedException {
-        System.out.println(playbackState + " PLAYBACK STATE");
-        System.out.println("QUEUE " + commandsQueue);
-        if (result.multiHandLandmarks().isEmpty()) {
-            System.out.println("NO LANDMARKS ");
-            return;
-        }
-        List<LandmarkProto.NormalizedLandmark> landmarks = result.multiHandLandmarks().get(0).getLandmarkList();
-        LandmarkProto.NormalizedLandmark wrist = landmarks.get(HandLandmark.WRIST);
-        LandmarkProto.NormalizedLandmark thumb_start = landmarks.get(HandLandmark.THUMB_MCP);
-        LandmarkProto.NormalizedLandmark index_start = landmarks.get(HandLandmark.INDEX_FINGER_MCP);
-        LandmarkProto.NormalizedLandmark middle_start = landmarks.get(HandLandmark.MIDDLE_FINGER_MCP);
-        LandmarkProto.NormalizedLandmark ring_start = landmarks.get(HandLandmark.RING_FINGER_MCP);
-        LandmarkProto.NormalizedLandmark pinky_start = landmarks.get(HandLandmark.PINKY_MCP);
-        LandmarkProto.NormalizedLandmark index_tip = landmarks.get(HandLandmark.INDEX_FINGER_TIP);
-        LandmarkProto.NormalizedLandmark middle_tip = landmarks.get(HandLandmark.MIDDLE_FINGER_TIP);
-        LandmarkProto.NormalizedLandmark ring_tip = landmarks.get(HandLandmark.RING_FINGER_TIP);
-        LandmarkProto.NormalizedLandmark pinky_tip = landmarks.get(HandLandmark.PINKY_TIP);
-        LandmarkProto.NormalizedLandmark index_dip = landmarks.get(HandLandmark.INDEX_FINGER_DIP);
-        LandmarkProto.NormalizedLandmark middle_dip = landmarks.get(HandLandmark.MIDDLE_FINGER_DIP);
-        LandmarkProto.NormalizedLandmark ring_dip = landmarks.get(HandLandmark.RING_FINGER_DIP);
-        LandmarkProto.NormalizedLandmark pinky_dip = landmarks.get(HandLandmark.PINKY_DIP);
-        LandmarkProto.NormalizedLandmark thumb_tip = landmarks.get(HandLandmark.THUMB_TIP);
-
-        Double x_reference = (Math.abs(Math.floor(wrist.getX() - index_start.getX() * 100) / 100) +
-                Math.abs(Math.floor(wrist.getX() - middle_start.getX() * 100) / 100) +
-                Math.abs(Math.floor(wrist.getX() - ring_start.getX() * 100) / 100) +
-                Math.abs(Math.floor(wrist.getX() - pinky_start.getX() * 100) / 100)) / 4;
-        Double y_reference = (Math.abs(Math.floor(wrist.getY() - index_start.getY() * 100) / 100) +
-                Math.abs(Math.floor(wrist.getY() - middle_start.getY() * 100) / 100) +
-                Math.abs(Math.floor(wrist.getY() - ring_start.getY() * 100) / 100) +
-                Math.abs(Math.floor(wrist.getY() - pinky_start.getY() * 100) / 100)) / 4;
-
-
-        Double x_index_tip = index_tip.getX() / x_reference;
-        Double y_index_tip = index_tip.getY() / y_reference;
-        Double x_middle_tip = middle_tip.getX() / x_reference;
-        Double y_middle_tip = middle_tip.getY() / y_reference;
-        Double x_ring_tip = ring_tip.getX() / x_reference;
-        Double y_ring_tip = ring_tip.getY() / y_reference;
-        Double x_pinky_tip = pinky_tip.getX() / x_reference;
-        Double y_pinky_tip = pinky_tip.getY() / y_reference;
-        Double x_index_dip = index_dip.getX() / x_reference;
-        Double y_index_dip = index_dip.getY() / y_reference;
-        Double x_middle_dip = middle_dip.getX() / x_reference;
-        Double y_middle_dip = middle_dip.getY() / y_reference;
-        Double x_ring_dip = ring_dip.getX() / x_reference;
-        Double y_ring_dip = ring_dip.getY() / y_reference;
-        Double x_pinky_dip = pinky_dip.getX() / x_reference;
-        Double y_pinky_dip = pinky_dip.getY() / y_reference;
-        Double x_thumb_tip = thumb_tip.getX() / x_reference;
-        Double y_thumb_tip = thumb_tip.getY() / y_reference;
-        Double x_thumb_start = thumb_start.getX() / x_reference;
-        Double y_thumb_start = thumb_start.getY() / y_reference;
-        Double x_index_start = index_start.getX() / x_reference;
-        Double y_index_start = index_start.getY() / y_reference;
-        Double x_middle_start = middle_start.getX() / x_reference;
-        Double y_middle_start = middle_start.getY() / y_reference;
-        Double x_ring_start = ring_start.getX() / x_reference;
-        Double y_ring_start = ring_start.getY() / y_reference;
-        Double x_pinky_start = pinky_start.getX() / x_reference;
-        Double y_pinky_start = pinky_start.getY() / y_reference;
-
-        Double closed_threshold = 0.15;
-        Double open_threshold = 0.3;
-        if (playbackState != commands.POINT_RIGHT && playbackState != commands.POINT_LEFT) {
-            boolean hand_is_closed = is_closed(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX", closed_threshold) &&
-                    is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold) &&
-                    is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold) &&
-                    is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold);
-            hand_is_closed = y_index_dip > y_index_start &&
-                    y_middle_dip > y_middle_start &&
-                    y_ring_dip > y_ring_start &&
-                    y_pinky_dip > y_pinky_start;
-
-            boolean hand_is_open = is_open(wrist, x_index_start, y_index_start, x_index_tip, y_index_tip, "INDEX", open_threshold) &&
-                    is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE", open_threshold) &&
-                    is_open(wrist, x_ring_start, y_ring_start, x_ring_tip, y_ring_tip, "RING", open_threshold) &&
-                    is_open(wrist, x_pinky_start, y_pinky_start, x_pinky_tip, y_pinky_tip, "PINKY", open_threshold);
-            // For Bitmaps, show the pixel values. For texture inputs, show the normalized coordinates.
-            hand_is_open = y_index_dip <= y_index_start &&
-                    y_middle_dip <= y_middle_start &&
-                    y_ring_dip <= y_ring_start &&
-                    y_pinky_dip <= y_pinky_start;
-            boolean forward_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX", 0.2) &&
-                    x_index_start < x_index_tip &&
-                    Math.abs(y_index_start - y_index_tip) < 0.1 &&
-                    is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold + 0.3) &&
-                    is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold + 0.3) &&
-                    is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold + 0.3);
-
-            boolean back_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX", 0.2) &&
-                    x_index_start > x_index_tip &&
-                    Math.abs(y_index_start - y_index_tip) < 0.1 &&
-                    is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold + 0.3) &&
-                    is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold + 0.3) &&
-                    is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold + 0.3);
-
-            if (forward_to) {
-
-                runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (commands.POINT_RIGHT != playbackState && commands.NULL != playbackState) {
-                            commandsQueue.add(0, commands.POINT_RIGHT);
-                            if (commandsQueue.size() > 30)
-                                commandsQueue.remove(commandsQueue.size() - 1);
-                            if (Collections.frequency(commandsQueue, commands.POINT_RIGHT) >= 20) {
-                                //pause.performClick();
-                                fist.setVisibility(View.INVISIBLE);
-                                open_hand.setVisibility(View.INVISIBLE);
-                                point_left.setVisibility(View.INVISIBLE);
-                                point_right.setVisibility(View.VISIBLE);
-                                stopReading(false);
-                                playbackState = commands.POINT_RIGHT;
-                                tts.speak("Select how many chapters you want to skip", TextToSpeech.QUEUE_FLUSH, null, null);
-                                commandsQueue.clear();
-                            }
-
-                        }
-
-                    }
-                });
-
-
-                //TimeUnit.SECONDS.sleep(3);
-
-            } else if (back_to) {
-                runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (commands.POINT_LEFT != playbackState && commands.NULL != playbackState) {
-                            commandsQueue.add(0, commands.POINT_LEFT);
-                            if (commandsQueue.size() > 30)
-                                commandsQueue.remove(commandsQueue.size() - 1);
-                            if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= 20) {
-                                //pause.performClick();
-                                fist.setVisibility(View.INVISIBLE);
-                                open_hand.setVisibility(View.INVISIBLE);
-                                point_left.setVisibility(View.VISIBLE);
-                                point_right.setVisibility(View.INVISIBLE);
-                                stopReading(false);
-                                playbackState = commands.POINT_LEFT;
-                                tts.speak("Select how many chapters you want to get back to", TextToSpeech.QUEUE_FLUSH, null, null);
-                                commandsQueue.clear();
-                            }
-
-                        }
-                    }
-                });
-
-
-                //TimeUnit.SECONDS.sleep(3);
-            } else if (hand_is_open) {
-                Log.i(
-                        TAG,
-                        "Hand is OPEN");
-                runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (commands.OPEN != playbackState) {
-                            commandsQueue.add(0, commands.OPEN);
-                            if (commandsQueue.size() > 30)
-                                commandsQueue.remove(commandsQueue.size() - 1);
-
-                            if (Collections.frequency(commandsQueue, commands.OPEN) >= 15) {
-                                fist.setVisibility(View.INVISIBLE);
-                                open_hand.setVisibility(View.VISIBLE);
-                                point_left.setVisibility(View.INVISIBLE);
-                                point_right.setVisibility(View.INVISIBLE);
-                                if (playbackState == commands.NULL) start.performClick();
-                                else play.performClick();
-                                playbackState = commands.OPEN;
-                                commandsQueue.clear();
-                            }
-
-                        }
-                    }
-                });
-
-            } else if (hand_is_closed) {
-                Log.i(
-                        TAG,
-                        "Hand is CLOSED");
-                runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (commands.CLOSED != playbackState && playbackState != commands.NULL) {
-                            commandsQueue.add(0, commands.CLOSED);
-                            if (commandsQueue.size() > 30)
-                                commandsQueue.remove(commandsQueue.size() - 1);
-                            if (Collections.frequency(commandsQueue, commands.CLOSED) >= 15) {
-                                fist.setVisibility(View.VISIBLE);
-                                open_hand.setVisibility(View.INVISIBLE);
-                                point_left.setVisibility(View.INVISIBLE);
-                                point_right.setVisibility(View.INVISIBLE);
-                                pause.performClick();
-                                playbackState = commands.CLOSED;
-                                commandsQueue.clear();
-                            }
-
-                        }
-                    }
-                });
-
-            }
-
-
-        } else {
-
-            boolean[] open_fingers =
-                    {is_open(wrist, x_index_start, y_index_start, x_index_tip, y_index_tip, "INDEX", open_threshold - 0.05),
-                            is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE", open_threshold),
-                            is_open(wrist, x_ring_start, y_ring_start, x_ring_tip, y_ring_tip, "RING", open_threshold),
-                            is_open(wrist, x_pinky_start, y_pinky_start, x_pinky_tip, y_pinky_tip, "PINKY", open_threshold)};
-            int sum = 0;
-            for (boolean b : open_fingers) {
-                sum += b ? 1 : 0;
-            }
-
-            System.out.println(sum + " OPEN FINGERS");
-
-            int finalSum = sum;
-            runOnUiThread(new Runnable() {
+            readingwebView = findViewById(R.id.read_WebView);
+            readingwebView.getSettings().setJavaScriptEnabled(true);
+            readingwebView.getSettings().setAllowFileAccess(true);
+            readingwebView.getSettings().setDefaultTextEncodingName("utf-8");
+            readingwebView.setWebViewClient(new WebViewClient() {
+                @Override
+                public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                    return false;
+                }
 
                 @Override
-                public void run() {
-                    commandsQueue.add(0, num2command.get(finalSum));
-                    if (commandsQueue.size() > 45) commandsQueue.remove(commandsQueue.size() - 1);
-                    if (commandsQueue.size() == 45)
-                        if (Collections.frequency(commandsQueue, num2command.get(finalSum)) >= 35) {
+                public void onPageFinished(WebView view, String url) {
+                    super.onPageFinished(view, url);
 
-                            if (playbackState == commands.POINT_RIGHT)
-                                if (pageNumber + finalSum <= pages.size())
-                                    readNextChapter(finalSum);
-                                else readNextChapter(pages.size() - pageNumber - 1);
-                            else if (playbackState == commands.POINT_LEFT)
-                                if (pageNumber - finalSum >= 0) readPreviousChapter(finalSum);
-                                else readPreviousChapter(pageNumber);
-                            fist.setVisibility(View.INVISIBLE);
-                            open_hand.setVisibility(View.VISIBLE);
-                            point_left.setVisibility(View.INVISIBLE);
-                            point_right.setVisibility(View.INVISIBLE);
+                    String subtitle = readableStrings.get(0);
+                    String title = readableStrings.get(1);
+                    String lyrics = "[\"" + TextUtils.join("\" , \"", readableStrings.subList(2, readableStrings.size())) + "\"]";
+                    int hindex = lastSentencereaded;
 
+                    String data = "{ author: '" + title + "' , song: '" + subtitle + "' , albumart: '" + "', lyrics: " + lyrics + ", highlight_index: " + hindex + " }";
 
-                            commandsQueue.clear();
-                            //stop.performClick();
-                            start.performClick();
-                            playbackState = commands.OPEN;
-                            commandsQueue.clear();
-                        }
-
+                    readingwebView.loadUrl("javascript:loadSong(" + data + ")");
                 }
             });
-            //playbackState = commands.OPEN;
-
+        } else {
+            start.setClickable(false);
+            start.setVisibility(View.INVISIBLE);
         }
-        if (result.multiHandWorldLandmarks().isEmpty()) {
-            return;
-        }
-        LandmarkProto.Landmark wristWorldLandmark =
-                result.multiHandWorldLandmarks().get(0).getLandmarkList().get(HandLandmark.WRIST);
-
-        Log.i(
-                TAG,
-                String.format(
-                        "MediaPipe Hand wrist world coordinates (in meters with the origin at the hand's"
-                                + " approximate geometric center): x=%f m, y=%f m, z=%f m",
-                        wristWorldLandmark.getX(), wristWorldLandmark.getY(), wristWorldLandmark.getZ()));
 
     }
 
@@ -963,7 +511,12 @@ public class EpubViewer extends AppCompatActivity {
     }
 
     private void readcurrent() {
-        tts.speak(readableStrings.get(lastSentencereaded), TextToSpeech.QUEUE_FLUSH, null, TextToSpeech.ACTION_TTS_QUEUE_PROCESSING_COMPLETED);
+        if (lastSentencereaded < readableStrings.size() && lastSentencereaded >= 0) {
+            tts.speak(readableStrings.get(lastSentencereaded), TextToSpeech.QUEUE_FLUSH, null, TextToSpeech.ACTION_TTS_QUEUE_PROCESSING_COMPLETED);
+        } else {
+            if (lastSentencereaded < 0) readPreviousChapter();
+            else readNextChapter();
+        }
     }
 
     public void pauseReading() {
@@ -1567,48 +1120,6 @@ public class EpubViewer extends AppCompatActivity {
         webView.reload();
     }
 
-    //WebView Gesture
-    private class CustomeGestureDetector extends GestureDetector.SimpleOnGestureListener {
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            if (e1 == null || e2 == null) return false;
-            if (e1.getPointerCount() > 1 || e2.getPointerCount() > 1) return false;
-            else {
-                try { // right to left swipe .. go to next page
-                    if (e1.getX() - e2.getX() > 150 && Math.abs(velocityX) > 1000) {
-
-                        return true;
-                    } //left to right swipe .. go to prev page
-                    else if (e2.getX() - e1.getX() > 150 && Math.abs(velocityX) > 1000) {
-
-                        return true;
-                    } //bottom to top, go to next document
-                    else if (e1.getY() - e2.getY() > 150 && Math.abs(velocityY) > 1000 && webView.getScrollY() >= Math.round(webView.getContentHeight() * webView.getScale()) - webView.getHeight() - 10) {
-                        if (pageNumber < pages.size() - 1) {
-                            pageNumber++;
-                            webView.loadUrl("file://" + pages.get(pageNumber));
-                            seekBar.setProgress(seekBar.getMax() * pageNumber / pages.size());
-                            webViewScrollAmount = 0;
-                            lastSentencereaded = 0;
-                        }
-                        return true;
-                    } //top to bottom, go to prev document
-                    else if (e2.getY() - e1.getY() > 150 && Math.abs(velocityY) > 1000 && webView.getScrollY() <= 10) {
-                        if (pageNumber > 0) {
-                            pageNumber--;
-                            webView.loadUrl("file://" + pages.get(pageNumber));
-                            seekBar.setProgress(seekBar.getMax() * pageNumber / pages.size());
-                            webViewScrollAmount = (int) (webView.getContentHeight() * webView.getScale()) - webView.getHeight();
-                            lastSentencereaded = 0;
-                        }
-                        return true;
-                    }
-                } catch (Exception e) {
-                }
-                return false;
-            }
-        }
-    }
 
     //Inject CSS to WebView
     private final static String CREATE_CUSTOM_SHEET =

@@ -20,7 +20,7 @@ public class MainSettingsFragment extends PreferenceFragmentCompat {
         preferenceGithub.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/kalash2203"));
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(String.valueOf(R.string.githublink)));
                 startActivity(browserIntent);
                 return true;
             }

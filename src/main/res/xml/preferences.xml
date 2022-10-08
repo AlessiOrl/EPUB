@@ -7,7 +7,6 @@
             android:defaultValue="true"
             android:key="keep_screen_on"
             android:title="Keep Screen On" />
-
         <SwitchPreferenceCompat
             android:defaultValue="true"
             android:key="rotation_lock"
@@ -15,8 +14,8 @@
 
         <SwitchPreferenceCompat
             android:defaultValue="true"
-            android:key="use_gesture"
-            android:title="Use Hand Gesture" />
+            android:key="use_reading"
+            android:title="Enable Reading Function" />
 
     </PreferenceCategory>
 

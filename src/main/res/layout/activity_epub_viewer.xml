@@ -9,12 +9,6 @@
     tools:context=".EpubViewer"
     tools:openDrawer="start">
 
-    <androidx.camera.view.PreviewView
-        android:id="@+id/previewView"
-        android:layout_width="match_parent"
-        android:layout_height="615dp"
-        android:visibility="invisible" />
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -59,13 +53,13 @@
             android:layout_height="wrap_content"
             android:layout_above="@id/seekBar"
             android:layout_marginRight="8dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="32dp"
             android:layout_toRightOf="@id/FAB_rew"
             android:clickable="true"
+            android:contentDescription="TODO"
             android:translationX="-96dp"
             android:visibility="gone"
-            app:srcCompat="@drawable/ic_baseline_play_arrow_24"
-            android:contentDescription="TODO" />
+            app:srcCompat="@drawable/ic_baseline_play_arrow_24" />
 
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -74,7 +68,7 @@
             android:layout_height="wrap_content"
             android:layout_above="@id/seekBar"
             android:layout_marginRight="8dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="32dp"
             android:layout_toRightOf="@id/FAB_rew"
             android:clickable="true"
             android:translationX="-96dp"
@@ -93,7 +87,7 @@
             android:layout_alignParentBottom="false"
             android:layout_centerHorizontal="true"
             android:layout_marginRight="8dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="32dp"
             android:layout_toRightOf="@id/FAB_rew"
             android:clickable="true"
             android:translationX="-32dp"
@@ -111,6 +105,7 @@
             android:layout_marginBottom="16dp"
             android:clickable="true"
             android:translationX="0dp"
+            android:visibility="invisible"
             app:backgroundTint="@color/colorPrimary"
             app:srcCompat="@drawable/ic_baseline_volume_up_24"
             app:useCompatPadding="false" />
@@ -122,7 +117,7 @@
             android:layout_above="@id/seekBar"
             android:layout_centerHorizontal="true"
             android:layout_marginRight="8dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="32dp"
             android:clickable="true"
             android:translationX="-96dp"
             android:visibility="gone"
@@ -134,7 +129,7 @@
             android:layout_height="wrap_content"
 
             android:layout_above="@id/seekBar"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="32dp"
             android:layout_toRightOf="@id/FAB_rew"
             android:clickable="true"
             android:translationX="32dp"
@@ -196,62 +191,5 @@
         android:layout_gravity="end"
         app:headerLayout="@layout/epub_nav_quote_header"
         app:menu="@menu/epub_nav_quote_menu" />
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <ImageView
-            android:id="@+id/point_left"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_marginStart="250dp"
-            android:layout_marginBottom="440dp"
-            android:visibility="invisible"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/point_left" />
-
-        <ImageView
-            android:id="@+id/point_right"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_marginStart="250dp"
-            android:layout_marginBottom="440dp"
-            android:visibility="invisible"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/point_right" />
-
-        <ImageView
-            android:id="@+id/open_hand"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_marginStart="250dp"
-            android:layout_marginBottom="440dp"
-            android:visibility="invisible"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/open_hand" />
-
-        <ImageView
-            android:id="@+id/fist"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_marginStart="250dp"
-            android:layout_marginBottom="440dp"
-            android:visibility="invisible"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/fist" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.drawerlayout.widget.DrawerLayout>
