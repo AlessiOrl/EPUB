@@ -20,6 +20,7 @@
         android:theme="@style/AppTheme">
         
         <activity android:name="com.android.example.epub.MainSettings" />
+        <activity android:name=".TutorialActivity" />
         <activity
             android:name="com.android.example.epub.EpubViewer"
             android:theme="@style/AppTheme.NoActionBar">
