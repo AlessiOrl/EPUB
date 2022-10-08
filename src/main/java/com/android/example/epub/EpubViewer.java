@@ -384,55 +384,14 @@ public class EpubViewer extends AppCompatActivity {
 
         //Seekbar
         final TextView textViewPercent = findViewById(R.id.textViewPercent);
+        final TextView textViewPage = findViewById(R.id.textViewPage);
+
         seekBar = findViewById(R.id.seekBar);
         seekBar.setMax(100);
         seekBar.setPadding(100, 0, 100, 0);
 
-        start = findViewById(R.id.FAB_start);
-        stop = findViewById(R.id.FAB_stop);
-        play = findViewById(R.id.FAB_play);
-        pause = findViewById(R.id.FAB_pause);
-        ff = findViewById(R.id.FAB_forward);
-        rew = findViewById(R.id.FAB_rew);
-        final FloatingActionButton[] mediabuttons = {ff, play, pause, stop, rew};
 
 
-        start.setOnClickListener(view -> {
-
-            start.hide();
-            for (FloatingActionButton mediabutton : mediabuttons) {
-                mediabutton.show();
-            }
-            playbackState = commands.OPEN;
-            startReading();
-        });
-        stop.setOnClickListener(view -> {
-            for (FloatingActionButton mediabutton : mediabuttons) {
-                mediabutton.hide();
-            }
-            start.show();
-            playbackState = commands.NULL;
-            stopReading();
-        });
-        play.setOnClickListener(view -> {
-            pause.show();
-            play.hide();
-            playbackState = commands.OPEN;
-            resumeReading();
-        });
-        pause.setOnClickListener(view -> {
-            play.show();
-            pause.hide();
-
-            playbackState = commands.CLOSED;
-            pauseReading();
-        });
-        ff.setOnClickListener(view -> {
-            gotoNext();
-        });
-        rew.setOnClickListener(view -> {
-            gotoPrevious();
-        });
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int progress;
 
@@ -517,9 +476,60 @@ public class EpubViewer extends AppCompatActivity {
 
         checkSharedPreferences();
 
-                /*
+
+                        /*
         MEDIA SECTION
          */
+        start = findViewById(R.id.FAB_start);
+        stop = findViewById(R.id.FAB_stop);
+        play = findViewById(R.id.FAB_play);
+        pause = findViewById(R.id.FAB_pause);
+        ff = findViewById(R.id.FAB_forward);
+        rew = findViewById(R.id.FAB_rew);
+        final FloatingActionButton[] mediabuttons = {ff, play, pause, stop, rew};
+
+        start.setOnClickListener(view -> {
+            start.hide();
+            for (FloatingActionButton mediabutton : mediabuttons) {
+                mediabutton.show();
+            }
+            playbackState = commands.OPEN;
+            seekBar.setVisibility(View.GONE);
+            textViewPercent.setVisibility(View.GONE);
+            textViewPage.setVisibility(View.GONE);
+            startReading();
+        });
+        stop.setOnClickListener(view -> {
+            for (FloatingActionButton mediabutton : mediabuttons) {
+                mediabutton.hide();
+            }
+            seekBar.setVisibility(View.VISIBLE);
+            textViewPercent.setVisibility(View.VISIBLE);
+            textViewPage.setVisibility(View.VISIBLE);
+            start.show();
+            playbackState = commands.NULL;
+            stopReading();
+        });
+        play.setOnClickListener(view -> {
+            pause.show();
+            play.hide();
+            playbackState = commands.OPEN;
+            resumeReading();
+        });
+        pause.setOnClickListener(view -> {
+            play.show();
+            pause.hide();
+
+            playbackState = commands.CLOSED;
+            pauseReading();
+        });
+        ff.setOnClickListener(view -> {
+            gotoNext();
+        });
+        rew.setOnClickListener(view -> {
+            gotoPrevious();
+        });
+
         readingwebView = findViewById(R.id.read_WebView);
         readingwebView.getSettings().setJavaScriptEnabled(true);
         readingwebView.getSettings().setAllowFileAccess(true);
@@ -544,6 +554,11 @@ public class EpubViewer extends AppCompatActivity {
                 readingwebView.loadUrl("javascript:loadSong(" + data + ")");
             }
         });
+
+        if (!sharedPreferences.getBoolean("use_button", false)) {
+            start.setVisibility(View.VISIBLE);
+            start.setClickable(true);
+        }
 
     }
 
