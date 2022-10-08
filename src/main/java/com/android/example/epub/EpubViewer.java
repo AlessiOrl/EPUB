@@ -26,6 +26,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -121,6 +122,15 @@ public class EpubViewer extends AppCompatActivity {
     }
 
     Enum playbackState = commands.NULL;         //-1=has to start, 0=started, 1=paused, 2=selecting chapters to skip
+
+    private int currentProgress = 0;
+    private ProgressBar progressBar;
+
+
+
+
+
+
     SeekBar seekBar;
     FloatingActionButton start;
     FloatingActionButton stop;
@@ -185,7 +195,8 @@ public class EpubViewer extends AppCompatActivity {
         setContentView(R.layout.activity_epub_viewer);
         context = getApplicationContext();
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-
+        progressBar = findViewById(R.id.progressBar);
+        progressBar.setMax(25);
         if (sharedPreferences.getBoolean("use_gesture", false)) {
             previewView = findViewById(R.id.previewView);
             fist = findViewById(R.id.fist);
@@ -730,15 +741,22 @@ public class EpubViewer extends AppCompatActivity {
                             commandsQueue.add(0, commands.POINT_RIGHT);
                             if (commandsQueue.size() > 30)
                                 commandsQueue.remove(commandsQueue.size() - 1);
-                            if (Collections.frequency(commandsQueue, commands.POINT_RIGHT) >= 20) {
-                                //pause.performClick();
+                            if (Collections.frequency(commandsQueue, commands.POINT_RIGHT) >= 5) {
                                 fist.setVisibility(View.INVISIBLE);
                                 open_hand.setVisibility(View.INVISIBLE);
                                 point_left.setVisibility(View.INVISIBLE);
                                 point_right.setVisibility(View.VISIBLE);
+                                progressBar.setProgress(Collections.frequency(commandsQueue, commands.POINT_RIGHT));
+
+                            }
+                            if (Collections.frequency(commandsQueue, commands.POINT_RIGHT) >= 20) {
+                                //pause.performClick();
+
                                 stopReading(false);
                                 playbackState = commands.POINT_RIGHT;
                                 tts.speak("Select how many chapters you want to skip", TextToSpeech.QUEUE_FLUSH, null, null);
+                                progressBar.setProgress(0);
+                                progressBar.setMax(45);
                                 commandsQueue.clear();
                             }
 
@@ -759,15 +777,21 @@ public class EpubViewer extends AppCompatActivity {
                             commandsQueue.add(0, commands.POINT_LEFT);
                             if (commandsQueue.size() > 30)
                                 commandsQueue.remove(commandsQueue.size() - 1);
-                            if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= 20) {
-                                //pause.performClick();
+                            if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= 5) {
                                 fist.setVisibility(View.INVISIBLE);
                                 open_hand.setVisibility(View.INVISIBLE);
                                 point_left.setVisibility(View.VISIBLE);
                                 point_right.setVisibility(View.INVISIBLE);
+                                progressBar.setProgress(Collections.frequency(commandsQueue, commands.POINT_LEFT));
+                            }
+                            if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= 20) {
+                                //pause.performClick();
+
                                 stopReading(false);
                                 playbackState = commands.POINT_LEFT;
                                 tts.speak("Select how many chapters you want to get back to", TextToSpeech.QUEUE_FLUSH, null, null);
+                                progressBar.setProgress(0);
+                                progressBar.setMax(45);
                                 commandsQueue.clear();
                             }
 
@@ -789,15 +813,20 @@ public class EpubViewer extends AppCompatActivity {
                             commandsQueue.add(0, commands.OPEN);
                             if (commandsQueue.size() > 30)
                                 commandsQueue.remove(commandsQueue.size() - 1);
-
-                            if (Collections.frequency(commandsQueue, commands.OPEN) >= 15) {
+                            if (Collections.frequency(commandsQueue, commands.OPEN) >= 5) {
                                 fist.setVisibility(View.INVISIBLE);
                                 open_hand.setVisibility(View.VISIBLE);
                                 point_left.setVisibility(View.INVISIBLE);
                                 point_right.setVisibility(View.INVISIBLE);
+                                progressBar.setProgress(Collections.frequency(commandsQueue, commands.OPEN));
+                            }
+                            if (Collections.frequency(commandsQueue, commands.OPEN) >= 20) {
+
                                 if (playbackState == commands.NULL) start.performClick();
                                 else play.performClick();
                                 playbackState = commands.OPEN;
+                                progressBar.setProgress(0);
+                                progressBar.setMax(20);
                                 commandsQueue.clear();
                             }
 
@@ -817,13 +846,19 @@ public class EpubViewer extends AppCompatActivity {
                             commandsQueue.add(0, commands.CLOSED);
                             if (commandsQueue.size() > 30)
                                 commandsQueue.remove(commandsQueue.size() - 1);
-                            if (Collections.frequency(commandsQueue, commands.CLOSED) >= 15) {
+                            if (Collections.frequency(commandsQueue, commands.CLOSED) >= 5){
                                 fist.setVisibility(View.VISIBLE);
                                 open_hand.setVisibility(View.INVISIBLE);
                                 point_left.setVisibility(View.INVISIBLE);
                                 point_right.setVisibility(View.INVISIBLE);
+                                progressBar.setProgress(Collections.frequency(commandsQueue, commands.CLOSED));
+                            }
+                            if (Collections.frequency(commandsQueue, commands.CLOSED) >= 20) {
+
                                 pause.performClick();
                                 playbackState = commands.CLOSED;
+                                progressBar.setProgress(0);
+                                progressBar.setMax(20);
                                 commandsQueue.clear();
                             }
 
@@ -875,6 +910,8 @@ public class EpubViewer extends AppCompatActivity {
                             //stop.performClick();
                             start.performClick();
                             playbackState = commands.OPEN;
+                            progressBar.setProgress(0);
+                            progressBar.setMax(20);
                             commandsQueue.clear();
                         }
 
