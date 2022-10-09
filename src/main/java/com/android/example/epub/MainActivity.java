@@ -316,6 +316,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 intentMainSettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intentMainSettings);
                 break;
+            case R.id.nav_tutorial:
+                Intent intentTutorial = new Intent(context, TutorialActivity.class);
+                intentTutorial.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intentTutorial);
+                break;
         }
         drawer.closeDrawer(GravityCompat.START);
         return true;
