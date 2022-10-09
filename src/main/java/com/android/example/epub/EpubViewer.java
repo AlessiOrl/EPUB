@@ -78,7 +78,7 @@ public class EpubViewer extends AppCompatActivity {
     ImageView open_hand;
     ImageView point_right;
     ImageView point_left;
-
+    TextView number;
     String bookTitle;
     boolean searchViewLongClick = false;
 
@@ -197,6 +197,7 @@ public class EpubViewer extends AppCompatActivity {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         progressBar = findViewById(R.id.progressBar);
         progressBar.setMax(25);
+        number = findViewById(R.id.number);
         if (sharedPreferences.getBoolean("use_gesture", false)) {
             previewView = findViewById(R.id.previewView);
             fist = findViewById(R.id.fist);
@@ -757,6 +758,8 @@ public class EpubViewer extends AppCompatActivity {
                             if (commandsQueue.size() > 30)
                                 commandsQueue.remove(commandsQueue.size() - 1);
                             if (Collections.frequency(commandsQueue, commands.POINT_RIGHT) >= 5) {
+                                number.setVisibility(View.INVISIBLE);
+                                progressBar.setVisibility(View.VISIBLE);
                                 fist.setVisibility(View.INVISIBLE);
                                 open_hand.setVisibility(View.INVISIBLE);
                                 point_left.setVisibility(View.INVISIBLE);
@@ -771,8 +774,10 @@ public class EpubViewer extends AppCompatActivity {
                                 playbackState = commands.POINT_RIGHT;
                                 tts.speak("Select how many chapters you want to skip", TextToSpeech.QUEUE_FLUSH, null, null);
                                 progressBar.setProgress(0);
-                                progressBar.setMax(45);
+                                progressBar.setMax(35);
+                                progressBar.setVisibility(View.INVISIBLE);
                                 commandsQueue.clear();
+                                point_right.setVisibility(View.INVISIBLE);
                             }
 
                         }
@@ -793,6 +798,8 @@ public class EpubViewer extends AppCompatActivity {
                             if (commandsQueue.size() > 30)
                                 commandsQueue.remove(commandsQueue.size() - 1);
                             if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= 5) {
+                                number.setVisibility(View.INVISIBLE);
+                                progressBar.setVisibility(View.VISIBLE);
                                 fist.setVisibility(View.INVISIBLE);
                                 open_hand.setVisibility(View.INVISIBLE);
                                 point_left.setVisibility(View.VISIBLE);
@@ -806,8 +813,10 @@ public class EpubViewer extends AppCompatActivity {
                                 playbackState = commands.POINT_LEFT;
                                 tts.speak("Select how many chapters you want to get back to", TextToSpeech.QUEUE_FLUSH, null, null);
                                 progressBar.setProgress(0);
-                                progressBar.setMax(45);
+                                progressBar.setMax(35);
                                 commandsQueue.clear();
+                                progressBar.setVisibility(View.INVISIBLE);
+                                point_left.setVisibility(View.INVISIBLE);
                             }
 
                         }
@@ -829,6 +838,8 @@ public class EpubViewer extends AppCompatActivity {
                             if (commandsQueue.size() > 30)
                                 commandsQueue.remove(commandsQueue.size() - 1);
                             if (Collections.frequency(commandsQueue, commands.OPEN) >= 5) {
+                                number.setVisibility(View.INVISIBLE);
+                                progressBar.setVisibility(View.VISIBLE);
                                 fist.setVisibility(View.INVISIBLE);
                                 open_hand.setVisibility(View.VISIBLE);
                                 point_left.setVisibility(View.INVISIBLE);
@@ -843,6 +854,8 @@ public class EpubViewer extends AppCompatActivity {
                                 progressBar.setProgress(0);
                                 progressBar.setMax(20);
                                 commandsQueue.clear();
+                                progressBar.setVisibility(View.INVISIBLE);
+                                open_hand.setVisibility(View.INVISIBLE);
                             }
 
                         }
@@ -862,6 +875,8 @@ public class EpubViewer extends AppCompatActivity {
                             if (commandsQueue.size() > 30)
                                 commandsQueue.remove(commandsQueue.size() - 1);
                             if (Collections.frequency(commandsQueue, commands.CLOSED) >= 5){
+                                number.setVisibility(View.INVISIBLE);
+                                progressBar.setVisibility(View.VISIBLE);
                                 fist.setVisibility(View.VISIBLE);
                                 open_hand.setVisibility(View.INVISIBLE);
                                 point_left.setVisibility(View.INVISIBLE);
@@ -875,6 +890,8 @@ public class EpubViewer extends AppCompatActivity {
                                 progressBar.setProgress(0);
                                 progressBar.setMax(20);
                                 commandsQueue.clear();
+                                progressBar.setVisibility(View.INVISIBLE);
+                                fist.setVisibility(View.INVISIBLE);
                             }
 
                         }
@@ -906,7 +923,18 @@ public class EpubViewer extends AppCompatActivity {
                     commandsQueue.add(0, num2command.get(finalSum));
                     if (commandsQueue.size() > 45) commandsQueue.remove(commandsQueue.size() - 1);
                     if (commandsQueue.size() == 45)
+                        if (Collections.frequency(commandsQueue,num2command.get(finalSum)) > 15){
+                            progressBar.setVisibility(View.VISIBLE);
+                            fist.setVisibility(View.INVISIBLE);
+                            open_hand.setVisibility(View.INVISIBLE);
+                            point_left.setVisibility(View.INVISIBLE);
+                            point_right.setVisibility(View.INVISIBLE);
+                            number.setText(String.valueOf(finalSum));
+                            number.setVisibility(View.VISIBLE);
+                            progressBar.setProgress(Collections.frequency(commandsQueue,num2command.get(finalSum)));
+                        }
                         if (Collections.frequency(commandsQueue, num2command.get(finalSum)) >= 35) {
+
 
                             if (playbackState == commands.POINT_RIGHT)
                                 if (pageNumber + finalSum <= pages.size())
@@ -915,13 +943,12 @@ public class EpubViewer extends AppCompatActivity {
                             else if (playbackState == commands.POINT_LEFT)
                                 if (pageNumber - finalSum >= 0) readPreviousChapter(finalSum);
                                 else readPreviousChapter(pageNumber);
-                            fist.setVisibility(View.INVISIBLE);
-                            open_hand.setVisibility(View.VISIBLE);
-                            point_left.setVisibility(View.INVISIBLE);
-                            point_right.setVisibility(View.INVISIBLE);
+
 
 
                             commandsQueue.clear();
+                            number.setVisibility(View.INVISIBLE);
+                            progressBar.setVisibility(View.INVISIBLE);
                             //stop.performClick();
                             start.performClick();
                             playbackState = commands.OPEN;
@@ -1015,7 +1042,12 @@ public class EpubViewer extends AppCompatActivity {
     }
 
     private void readcurrent() {
-        tts.speak(readableStrings.get(lastSentencereaded), TextToSpeech.QUEUE_FLUSH, null, TextToSpeech.ACTION_TTS_QUEUE_PROCESSING_COMPLETED);
+        if (lastSentencereaded < readableStrings.size() && lastSentencereaded >= 0) {
+            tts.speak(readableStrings.get(lastSentencereaded), TextToSpeech.QUEUE_FLUSH, null, TextToSpeech.ACTION_TTS_QUEUE_PROCESSING_COMPLETED);
+        } else {
+            if (lastSentencereaded < 0) readPreviousChapter();
+            else readNextChapter();
+        }
     }
 
     public void pauseReading() {
