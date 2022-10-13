@@ -67,6 +67,9 @@ import com.google.mediapipe.solutions.hands.Hands;
 import com.google.mediapipe.solutions.hands.HandsOptions;
 import com.google.mediapipe.solutions.hands.HandsResult;
 
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+
 
 public class EpubViewer extends AppCompatActivity {
     PreviewView previewView;
@@ -80,8 +83,9 @@ public class EpubViewer extends AppCompatActivity {
     ImageView point_left;
     TextView number;
     String bookTitle;
-    boolean searchViewLongClick = false;
 
+    boolean searchViewLongClick = false;
+    boolean vibrate = true;
     private enum commands {
         NULL,
         OPEN,
@@ -126,7 +130,8 @@ public class EpubViewer extends AppCompatActivity {
     private int currentProgress = 0;
     private ProgressBar progressBar;
 
-
+    Vibrator vibrator;
+    VibrationEffect vibrationEffect1;
 
 
 
@@ -194,10 +199,17 @@ public class EpubViewer extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_epub_viewer);
         context = getApplicationContext();
+
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         progressBar = findViewById(R.id.progressBar);
         progressBar.setMax(25);
         number = findViewById(R.id.number);
+        vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        // this effect creates the vibration of default amplitude for 1000ms(1 sec)
+        vibrationEffect1 = VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE);
+
+        // it is safe to cancel other vibrations currently taking place
+
         if (sharedPreferences.getBoolean("use_gesture", false)) {
             previewView = findViewById(R.id.previewView);
             fist = findViewById(R.id.fist);
@@ -769,7 +781,10 @@ public class EpubViewer extends AppCompatActivity {
                             }
                             if (Collections.frequency(commandsQueue, commands.POINT_RIGHT) >= 20) {
                                 //pause.performClick();
-
+                                if (vibrate) {
+                                    vibrator.cancel();
+                                    vibrator.vibrate(vibrationEffect1);
+                                }
                                 stopReading(false);
                                 playbackState = commands.POINT_RIGHT;
                                 tts.speak("Select how many chapters you want to skip", TextToSpeech.QUEUE_FLUSH, null, null);
@@ -808,7 +823,10 @@ public class EpubViewer extends AppCompatActivity {
                             }
                             if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= 20) {
                                 //pause.performClick();
-
+                                if (vibrate) {
+                                    vibrator.cancel();
+                                    vibrator.vibrate(vibrationEffect1);
+                                }
                                 stopReading(false);
                                 playbackState = commands.POINT_LEFT;
                                 tts.speak("Select how many chapters you want to get back to", TextToSpeech.QUEUE_FLUSH, null, null);
@@ -847,7 +865,10 @@ public class EpubViewer extends AppCompatActivity {
                                 progressBar.setProgress(Collections.frequency(commandsQueue, commands.OPEN));
                             }
                             if (Collections.frequency(commandsQueue, commands.OPEN) >= 20) {
-
+                                if (vibrate) {
+                                    vibrator.cancel();
+                                    vibrator.vibrate(vibrationEffect1);
+                                }
                                 if (playbackState == commands.NULL) start.performClick();
                                 else play.performClick();
                                 playbackState = commands.OPEN;
@@ -884,7 +905,10 @@ public class EpubViewer extends AppCompatActivity {
                                 progressBar.setProgress(Collections.frequency(commandsQueue, commands.CLOSED));
                             }
                             if (Collections.frequency(commandsQueue, commands.CLOSED) >= 20) {
-
+                                if (vibrate) {
+                                    vibrator.cancel();
+                                    vibrator.vibrate(vibrationEffect1);
+                                }
                                 pause.performClick();
                                 playbackState = commands.CLOSED;
                                 progressBar.setProgress(0);
@@ -934,7 +958,10 @@ public class EpubViewer extends AppCompatActivity {
                             progressBar.setProgress(Collections.frequency(commandsQueue,num2command.get(finalSum)));
                         }
                         if (Collections.frequency(commandsQueue, num2command.get(finalSum)) >= 35) {
-
+                            if (vibrate) {
+                                vibrator.cancel();
+                                vibrator.vibrate(vibrationEffect1);
+                            }
 
                             if (playbackState == commands.POINT_RIGHT)
                                 if (pageNumber + finalSum <= pages.size())
@@ -1012,6 +1039,7 @@ public class EpubViewer extends AppCompatActivity {
             tts.shutdown();
             Log.d("TTS", "TTS Destroyed");
         }
+        cameraInput.close();
         super.onDestroy();
     }
 
