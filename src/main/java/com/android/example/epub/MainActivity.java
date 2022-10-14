@@ -245,6 +245,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             sharedPreferences.edit().putBoolean("where_i_left", true).commit();
             sharedPreferences.edit().putBoolean("built_in_web_browser", true).commit();
             sharedPreferences.edit().putBoolean("use_gesture", true).commit();
+            sharedPreferences.edit().putBoolean("vibrateongesture", true).commit();
             sharedPreferences.edit().putBoolean("use_button", true).commit();
             sharedPreferences.edit().putBoolean("firstrun", false).commit();
 

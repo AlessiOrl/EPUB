@@ -18,6 +18,13 @@
             android:key="use_gesture"
             android:title="Use Hand Gesture" />
         <SwitchPreferenceCompat
+            android:id="@+id/switchvibrateongesture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="true"
+            android:key="vibrateongesture"
+            android:title="Vibrate On Gesture" />
+        <SwitchPreferenceCompat
             android:id="@+id/switchPreferenceCompat"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

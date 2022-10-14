@@ -14,10 +14,9 @@ import java.util.Arrays;
 public class TutorialActivity extends AppCompatActivity {
 
     // ArrayList for person names
-    ArrayList<String> gestureTitles = new ArrayList<>(Arrays.asList("Fist", "Open Hand", "Point Left", "Point Right"));
-    ArrayList<String> gestureUsage = new ArrayList<>(Arrays.asList("Pause, Cancel skip", "Start, Play, Number 5", "Back X Chapters", "Forward X Chapters"));
-
-    ArrayList<Integer> gestureImages = new ArrayList<>(Arrays.asList(R.drawable.fist, R.drawable.open_hand, R.drawable.point_left, R.drawable.point_right));
+    ArrayList<String> gestureTitles = new ArrayList<>(Arrays.asList("Fist", "Open Hand", "Point Left", "Point Right", "Number 0 to 4"));
+    ArrayList<String> gestureUsage = new ArrayList<>(Arrays.asList("Pause, Cancel skip", "Start, Play, Number 5", "Back X Chapters", "Forward X Chapters", "Thumb Doesn't count in the number count"));
+    ArrayList<Integer> gestureImages = new ArrayList<>(Arrays.asList(R.drawable.fist, R.drawable.open_hand, R.drawable.point_left, R.drawable.point_right, R.drawable.fist));
     Context context;
     TutorialAdapter customAdapter;
     RecyclerView recyclerView;

@@ -85,7 +85,6 @@ public class EpubViewer extends AppCompatActivity {
     String bookTitle;
 
     boolean searchViewLongClick = false;
-    boolean vibrate = true;
     private enum commands {
         NULL,
         OPEN,
@@ -154,7 +153,7 @@ public class EpubViewer extends AppCompatActivity {
     List<String> pagesRef = new ArrayList<>();
     List<String> pages = new ArrayList<>();
     int pageNumber = 0;
-
+    boolean vibrate = true;
     DrawerLayout drawer;
     NavigationView navigationViewContent;
     int webViewScrollAmount = 0;
@@ -199,6 +198,7 @@ public class EpubViewer extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_epub_viewer);
         context = getApplicationContext();
+        vibrate = sharedPreferences.getBoolean("use_gesture", false);
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         progressBar = findViewById(R.id.progressBar);
