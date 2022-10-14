@@ -198,7 +198,6 @@ public class EpubViewer extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_epub_viewer);
         context = getApplicationContext();
-        vibrate = sharedPreferences.getBoolean("use_gesture", false);
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         progressBar = findViewById(R.id.progressBar);
@@ -207,6 +206,7 @@ public class EpubViewer extends AppCompatActivity {
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         // this effect creates the vibration of default amplitude for 1000ms(1 sec)
         vibrationEffect1 = VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE);
+        vibrate = sharedPreferences.getBoolean("vibrateongesture", false);
 
         // it is safe to cancel other vibrations currently taking place
 
@@ -501,17 +501,24 @@ public class EpubViewer extends AppCompatActivity {
         rew = findViewById(R.id.FAB_rew);
         final FloatingActionButton[] mediabuttons = {ff, play, pause, stop, rew};
 
+        boolean use_button = sharedPreferences.getBoolean("use_button", false);
+        if (use_button) {
+            start.setVisibility(View.VISIBLE);
+            start.setClickable(true);
+        }
         start.setOnClickListener(view -> {
             start.hide();
             for (FloatingActionButton mediabutton : mediabuttons) {
                 mediabutton.show();
             }
             playbackState = commands.OPEN;
+
             seekBar.setVisibility(View.GONE);
             textViewPercent.setVisibility(View.GONE);
             textViewPage.setVisibility(View.GONE);
             startReading();
         });
+
         stop.setOnClickListener(view -> {
             for (FloatingActionButton mediabutton : mediabuttons) {
                 mediabutton.hide();
@@ -519,18 +526,18 @@ public class EpubViewer extends AppCompatActivity {
             seekBar.setVisibility(View.VISIBLE);
             textViewPercent.setVisibility(View.VISIBLE);
             textViewPage.setVisibility(View.VISIBLE);
-            start.show();
+            if (use_button) start.show();
             playbackState = commands.NULL;
             stopReading();
         });
         play.setOnClickListener(view -> {
-            pause.show();
+            if (use_button) pause.show();
             play.hide();
             playbackState = commands.OPEN;
             resumeReading();
         });
         pause.setOnClickListener(view -> {
-            play.show();
+            if (use_button) play.show();
             pause.hide();
 
             playbackState = commands.CLOSED;
@@ -568,10 +575,7 @@ public class EpubViewer extends AppCompatActivity {
             }
         });
 
-        if (!sharedPreferences.getBoolean("use_button", false)) {
-            start.setVisibility(View.VISIBLE);
-            start.setClickable(true);
-        }
+
 
     }
 
