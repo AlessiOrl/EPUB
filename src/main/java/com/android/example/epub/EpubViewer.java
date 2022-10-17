@@ -83,7 +83,7 @@ public class EpubViewer extends AppCompatActivity {
     ImageView point_left;
     TextView number;
     String bookTitle;
-
+    int counter = 10;
     boolean searchViewLongClick = false;
     private enum commands {
         NULL,
@@ -98,7 +98,7 @@ public class EpubViewer extends AppCompatActivity {
         NUMBER4
     }
 
-    List<Enum> commandsQueue = new ArrayList<Enum>(Arrays.asList(commands.NULL, commands.NULL));
+    List<Enum> commandsQueue = new ArrayList<Enum>();
     static Map<Integer, Enum> num2command;
 
     static {
@@ -125,7 +125,7 @@ public class EpubViewer extends AppCompatActivity {
     }
 
     Enum playbackState = commands.NULL;         //-1=has to start, 0=started, 1=paused, 2=selecting chapters to skip
-
+    Enum lastCommand = commands.NULL;
     private int currentProgress = 0;
     private ProgressBar progressBar;
 
@@ -208,6 +208,8 @@ public class EpubViewer extends AppCompatActivity {
         vibrationEffect1 = VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE);
         vibrate = sharedPreferences.getBoolean("vibrateongesture", false);
 
+
+        for (int i=0; i < 45; i++) commandsQueue.add(commands.NULL);
         // it is safe to cancel other vibrations currently taking place
 
         if (sharedPreferences.getBoolean("use_gesture", false)) {
@@ -666,114 +668,132 @@ public class EpubViewer extends AppCompatActivity {
     }
 
     private void logLandmarks(HandsResult result, boolean showPixelValues) throws InterruptedException {
-        System.out.println(playbackState + " PLAYBACK STATE");
-        System.out.println("QUEUE " + commandsQueue);
-        if (result.multiHandLandmarks().isEmpty()) {
-            System.out.println("NO LANDMARKS ");
-            return;
-        }
-        List<LandmarkProto.NormalizedLandmark> landmarks = result.multiHandLandmarks().get(0).getLandmarkList();
-        LandmarkProto.NormalizedLandmark wrist = landmarks.get(HandLandmark.WRIST);
-        LandmarkProto.NormalizedLandmark thumb_start = landmarks.get(HandLandmark.THUMB_MCP);
-        LandmarkProto.NormalizedLandmark index_start = landmarks.get(HandLandmark.INDEX_FINGER_MCP);
-        LandmarkProto.NormalizedLandmark middle_start = landmarks.get(HandLandmark.MIDDLE_FINGER_MCP);
-        LandmarkProto.NormalizedLandmark ring_start = landmarks.get(HandLandmark.RING_FINGER_MCP);
-        LandmarkProto.NormalizedLandmark pinky_start = landmarks.get(HandLandmark.PINKY_MCP);
-        LandmarkProto.NormalizedLandmark index_tip = landmarks.get(HandLandmark.INDEX_FINGER_TIP);
-        LandmarkProto.NormalizedLandmark middle_tip = landmarks.get(HandLandmark.MIDDLE_FINGER_TIP);
-        LandmarkProto.NormalizedLandmark ring_tip = landmarks.get(HandLandmark.RING_FINGER_TIP);
-        LandmarkProto.NormalizedLandmark pinky_tip = landmarks.get(HandLandmark.PINKY_TIP);
-        LandmarkProto.NormalizedLandmark index_dip = landmarks.get(HandLandmark.INDEX_FINGER_DIP);
-        LandmarkProto.NormalizedLandmark middle_dip = landmarks.get(HandLandmark.MIDDLE_FINGER_DIP);
-        LandmarkProto.NormalizedLandmark ring_dip = landmarks.get(HandLandmark.RING_FINGER_DIP);
-        LandmarkProto.NormalizedLandmark pinky_dip = landmarks.get(HandLandmark.PINKY_DIP);
-        LandmarkProto.NormalizedLandmark thumb_tip = landmarks.get(HandLandmark.THUMB_TIP);
-
-        Double x_reference = (Math.abs(Math.floor(wrist.getX() - index_start.getX() * 100) / 100) +
-                Math.abs(Math.floor(wrist.getX() - middle_start.getX() * 100) / 100) +
-                Math.abs(Math.floor(wrist.getX() - ring_start.getX() * 100) / 100) +
-                Math.abs(Math.floor(wrist.getX() - pinky_start.getX() * 100) / 100)) / 4;
-        Double y_reference = (Math.abs(Math.floor(wrist.getY() - index_start.getY() * 100) / 100) +
-                Math.abs(Math.floor(wrist.getY() - middle_start.getY() * 100) / 100) +
-                Math.abs(Math.floor(wrist.getY() - ring_start.getY() * 100) / 100) +
-                Math.abs(Math.floor(wrist.getY() - pinky_start.getY() * 100) / 100)) / 4;
+        counter++;
+        if (counter > 10){
 
 
-        Double x_index_tip = index_tip.getX() / x_reference;
-        Double y_index_tip = index_tip.getY() / y_reference;
-        Double x_middle_tip = middle_tip.getX() / x_reference;
-        Double y_middle_tip = middle_tip.getY() / y_reference;
-        Double x_ring_tip = ring_tip.getX() / x_reference;
-        Double y_ring_tip = ring_tip.getY() / y_reference;
-        Double x_pinky_tip = pinky_tip.getX() / x_reference;
-        Double y_pinky_tip = pinky_tip.getY() / y_reference;
-        Double x_index_dip = index_dip.getX() / x_reference;
-        Double y_index_dip = index_dip.getY() / y_reference;
-        Double x_middle_dip = middle_dip.getX() / x_reference;
-        Double y_middle_dip = middle_dip.getY() / y_reference;
-        Double x_ring_dip = ring_dip.getX() / x_reference;
-        Double y_ring_dip = ring_dip.getY() / y_reference;
-        Double x_pinky_dip = pinky_dip.getX() / x_reference;
-        Double y_pinky_dip = pinky_dip.getY() / y_reference;
-        Double x_thumb_tip = thumb_tip.getX() / x_reference;
-        Double y_thumb_tip = thumb_tip.getY() / y_reference;
-        Double x_thumb_start = thumb_start.getX() / x_reference;
-        Double y_thumb_start = thumb_start.getY() / y_reference;
-        Double x_index_start = index_start.getX() / x_reference;
-        Double y_index_start = index_start.getY() / y_reference;
-        Double x_middle_start = middle_start.getX() / x_reference;
-        Double y_middle_start = middle_start.getY() / y_reference;
-        Double x_ring_start = ring_start.getX() / x_reference;
-        Double y_ring_start = ring_start.getY() / y_reference;
-        Double x_pinky_start = pinky_start.getX() / x_reference;
-        Double y_pinky_start = pinky_start.getY() / y_reference;
+            int loading_threshold = 10;
+            int command_threshold = 25;
+            if (Collections.frequency(commandsQueue, lastCommand) < loading_threshold){
+                progressBar.setVisibility(View.INVISIBLE);
+                number.setVisibility(View.INVISIBLE);
+                fist.setVisibility(View.INVISIBLE);
+                open_hand.setVisibility(View.INVISIBLE);
+                point_left.setVisibility(View.INVISIBLE);
+                point_right.setVisibility(View.INVISIBLE);
+            }
+            System.out.println(playbackState + " LAST COMMAND");
+            System.out.println(playbackState + " PLAYBACK STATE");
+            System.out.println("QUEUE " + commandsQueue);
+            if (result.multiHandLandmarks().isEmpty()) {
+                commandsQueue.add(0, commands.NULL);
+                commandsQueue.remove(commandsQueue.size() - 1);
+                progressBar.setProgress(Collections.frequency(commandsQueue, lastCommand));
+                System.out.println("NO LANDMARKS ");
+                return;
+            }
+            List<LandmarkProto.NormalizedLandmark> landmarks = result.multiHandLandmarks().get(0).getLandmarkList();
+            LandmarkProto.NormalizedLandmark wrist = landmarks.get(HandLandmark.WRIST);
+            LandmarkProto.NormalizedLandmark thumb_start = landmarks.get(HandLandmark.THUMB_MCP);
+            LandmarkProto.NormalizedLandmark index_start = landmarks.get(HandLandmark.INDEX_FINGER_MCP);
+            LandmarkProto.NormalizedLandmark middle_start = landmarks.get(HandLandmark.MIDDLE_FINGER_MCP);
+            LandmarkProto.NormalizedLandmark ring_start = landmarks.get(HandLandmark.RING_FINGER_MCP);
+            LandmarkProto.NormalizedLandmark pinky_start = landmarks.get(HandLandmark.PINKY_MCP);
+            LandmarkProto.NormalizedLandmark index_tip = landmarks.get(HandLandmark.INDEX_FINGER_TIP);
+            LandmarkProto.NormalizedLandmark middle_tip = landmarks.get(HandLandmark.MIDDLE_FINGER_TIP);
+            LandmarkProto.NormalizedLandmark ring_tip = landmarks.get(HandLandmark.RING_FINGER_TIP);
+            LandmarkProto.NormalizedLandmark pinky_tip = landmarks.get(HandLandmark.PINKY_TIP);
+            LandmarkProto.NormalizedLandmark index_dip = landmarks.get(HandLandmark.INDEX_FINGER_DIP);
+            LandmarkProto.NormalizedLandmark middle_dip = landmarks.get(HandLandmark.MIDDLE_FINGER_DIP);
+            LandmarkProto.NormalizedLandmark ring_dip = landmarks.get(HandLandmark.RING_FINGER_DIP);
+            LandmarkProto.NormalizedLandmark pinky_dip = landmarks.get(HandLandmark.PINKY_DIP);
+            LandmarkProto.NormalizedLandmark thumb_tip = landmarks.get(HandLandmark.THUMB_TIP);
 
-        Double closed_threshold = 0.15;
-        Double open_threshold = 0.3;
-        if (playbackState != commands.POINT_RIGHT && playbackState != commands.POINT_LEFT) {
-            boolean hand_is_closed = is_closed(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX", closed_threshold) &&
-                    is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold) &&
-                    is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold) &&
-                    is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold);
-            hand_is_closed = y_index_dip > y_index_start &&
-                    y_middle_dip > y_middle_start &&
-                    y_ring_dip > y_ring_start &&
-                    y_pinky_dip > y_pinky_start;
+            Double x_reference = (Math.abs(Math.floor(wrist.getX() - index_start.getX() * 100) / 100) +
+                    Math.abs(Math.floor(wrist.getX() - middle_start.getX() * 100) / 100) +
+                    Math.abs(Math.floor(wrist.getX() - ring_start.getX() * 100) / 100) +
+                    Math.abs(Math.floor(wrist.getX() - pinky_start.getX() * 100) / 100)) / 4;
+            Double y_reference = (Math.abs(Math.floor(wrist.getY() - index_start.getY() * 100) / 100) +
+                    Math.abs(Math.floor(wrist.getY() - middle_start.getY() * 100) / 100) +
+                    Math.abs(Math.floor(wrist.getY() - ring_start.getY() * 100) / 100) +
+                    Math.abs(Math.floor(wrist.getY() - pinky_start.getY() * 100) / 100)) / 4;
 
-            boolean hand_is_open = is_open(wrist, x_index_start, y_index_start, x_index_tip, y_index_tip, "INDEX", open_threshold) &&
-                    is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE", open_threshold) &&
-                    is_open(wrist, x_ring_start, y_ring_start, x_ring_tip, y_ring_tip, "RING", open_threshold) &&
-                    is_open(wrist, x_pinky_start, y_pinky_start, x_pinky_tip, y_pinky_tip, "PINKY", open_threshold);
-            // For Bitmaps, show the pixel values. For texture inputs, show the normalized coordinates.
-            hand_is_open = y_index_dip <= y_index_start &&
-                    y_middle_dip <= y_middle_start &&
-                    y_ring_dip <= y_ring_start &&
-                    y_pinky_dip <= y_pinky_start;
-            boolean forward_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX", 0.2) &&
-                    x_index_start < x_index_tip &&
-                    Math.abs(y_index_start - y_index_tip) < 0.1 &&
-                    is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold + 0.3) &&
-                    is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold + 0.3) &&
-                    is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold + 0.3);
 
-            boolean back_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX", 0.2) &&
-                    x_index_start > x_index_tip &&
-                    Math.abs(y_index_start - y_index_tip) < 0.1 &&
-                    is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold + 0.3) &&
-                    is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold + 0.3) &&
-                    is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold + 0.3);
+            Double x_index_tip = index_tip.getX() / x_reference;
+            Double y_index_tip = index_tip.getY() / y_reference;
+            Double x_middle_tip = middle_tip.getX() / x_reference;
+            Double y_middle_tip = middle_tip.getY() / y_reference;
+            Double x_ring_tip = ring_tip.getX() / x_reference;
+            Double y_ring_tip = ring_tip.getY() / y_reference;
+            Double x_pinky_tip = pinky_tip.getX() / x_reference;
+            Double y_pinky_tip = pinky_tip.getY() / y_reference;
+            Double x_index_dip = index_dip.getX() / x_reference;
+            Double y_index_dip = index_dip.getY() / y_reference;
+            Double x_middle_dip = middle_dip.getX() / x_reference;
+            Double y_middle_dip = middle_dip.getY() / y_reference;
+            Double x_ring_dip = ring_dip.getX() / x_reference;
+            Double y_ring_dip = ring_dip.getY() / y_reference;
+            Double x_pinky_dip = pinky_dip.getX() / x_reference;
+            Double y_pinky_dip = pinky_dip.getY() / y_reference;
+            Double x_thumb_tip = thumb_tip.getX() / x_reference;
+            Double y_thumb_tip = thumb_tip.getY() / y_reference;
+            Double x_thumb_start = thumb_start.getX() / x_reference;
+            Double y_thumb_start = thumb_start.getY() / y_reference;
+            Double x_index_start = index_start.getX() / x_reference;
+            Double y_index_start = index_start.getY() / y_reference;
+            Double x_middle_start = middle_start.getX() / x_reference;
+            Double y_middle_start = middle_start.getY() / y_reference;
+            Double x_ring_start = ring_start.getX() / x_reference;
+            Double y_ring_start = ring_start.getY() / y_reference;
+            Double x_pinky_start = pinky_start.getX() / x_reference;
+            Double y_pinky_start = pinky_start.getY() / y_reference;
 
-            if (forward_to) {
+            Double closed_threshold = 0.15;
+            Double open_threshold = 0.3;
+            if (playbackState != commands.POINT_RIGHT && playbackState != commands.POINT_LEFT) {
+                boolean hand_is_closed = is_closed(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX", closed_threshold) &&
+                        is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold) &&
+                        is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold) &&
+                        is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold);
+                hand_is_closed = y_index_dip > y_index_start &&
+                        y_middle_dip > y_middle_start &&
+                        y_ring_dip > y_ring_start &&
+                        y_pinky_dip > y_pinky_start;
 
-                runOnUiThread(new Runnable() {
+                boolean hand_is_open = is_open(wrist, x_index_start, y_index_start, x_index_tip, y_index_tip, "INDEX", open_threshold) &&
+                        is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE", open_threshold) &&
+                        is_open(wrist, x_ring_start, y_ring_start, x_ring_tip, y_ring_tip, "RING", open_threshold) &&
+                        is_open(wrist, x_pinky_start, y_pinky_start, x_pinky_tip, y_pinky_tip, "PINKY", open_threshold);
+                // For Bitmaps, show the pixel values. For texture inputs, show the normalized coordinates.
+                hand_is_open = y_index_dip <= y_index_start &&
+                        y_middle_dip <= y_middle_start &&
+                        y_ring_dip <= y_ring_start &&
+                        y_pinky_dip <= y_pinky_start;
+                boolean forward_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX", 0.2) &&
+                        x_index_start < x_index_tip &&
+                        Math.abs(y_index_start - y_index_tip) < 0.1 &&
+                        is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold + 0.3) &&
+                        is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold + 0.3) &&
+                        is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold + 0.3);
 
-                    @Override
-                    public void run() {
-                        if (commands.POINT_RIGHT != playbackState && commands.NULL != playbackState) {
+                boolean back_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX", 0.2) &&
+                        x_index_start > x_index_tip &&
+                        Math.abs(y_index_start - y_index_tip) < 0.1 &&
+                        is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold + 0.3) &&
+                        is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold + 0.3) &&
+                        is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold + 0.3);
+
+                if (forward_to && commands.POINT_RIGHT != playbackState && commands.NULL != playbackState) {
+
+                    runOnUiThread(new Runnable() {
+
+                        @Override
+                        public void run() {
+
                             commandsQueue.add(0, commands.POINT_RIGHT);
-                            if (commandsQueue.size() > 30)
-                                commandsQueue.remove(commandsQueue.size() - 1);
-                            if (Collections.frequency(commandsQueue, commands.POINT_RIGHT) >= 5) {
+                            commandsQueue.remove(commandsQueue.size() - 1);
+                            if (Collections.frequency(commandsQueue, commands.POINT_RIGHT) >= loading_threshold) {
+                                lastCommand = commands.POINT_RIGHT;
                                 number.setVisibility(View.INVISIBLE);
                                 progressBar.setVisibility(View.VISIBLE);
                                 fist.setVisibility(View.INVISIBLE);
@@ -783,7 +803,7 @@ public class EpubViewer extends AppCompatActivity {
                                 progressBar.setProgress(Collections.frequency(commandsQueue, commands.POINT_RIGHT));
 
                             }
-                            if (Collections.frequency(commandsQueue, commands.POINT_RIGHT) >= 20) {
+                            if (Collections.frequency(commandsQueue, commands.POINT_RIGHT) >= command_threshold) {
                                 //pause.performClick();
                                 if (vibrate) {
                                     vibrator.cancel();
@@ -796,70 +816,76 @@ public class EpubViewer extends AppCompatActivity {
                                 progressBar.setMax(35);
                                 progressBar.setVisibility(View.INVISIBLE);
                                 commandsQueue.clear();
+                                counter = 0;
+                                for (int i=0; i < 45; i++) commandsQueue.add(commands.NULL);
                                 point_right.setVisibility(View.INVISIBLE);
                             }
 
                         }
 
-                    }
-                });
+
+                    });
 
 
-                //TimeUnit.SECONDS.sleep(3);
+                    //TimeUnit.SECONDS.sleep(3);
 
-            } else if (back_to) {
-                runOnUiThread(new Runnable() {
+                } else if (back_to && commands.POINT_LEFT != playbackState && commands.NULL != playbackState) {
 
-                    @Override
-                    public void run() {
-                        if (commands.POINT_LEFT != playbackState && commands.NULL != playbackState) {
-                            commandsQueue.add(0, commands.POINT_LEFT);
-                            if (commandsQueue.size() > 30)
+                    runOnUiThread(new Runnable() {
+
+                            @Override
+                            public void run() {
+
+                                commandsQueue.add(0, commands.POINT_LEFT);
                                 commandsQueue.remove(commandsQueue.size() - 1);
-                            if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= 5) {
-                                number.setVisibility(View.INVISIBLE);
-                                progressBar.setVisibility(View.VISIBLE);
-                                fist.setVisibility(View.INVISIBLE);
-                                open_hand.setVisibility(View.INVISIBLE);
-                                point_left.setVisibility(View.VISIBLE);
-                                point_right.setVisibility(View.INVISIBLE);
-                                progressBar.setProgress(Collections.frequency(commandsQueue, commands.POINT_LEFT));
-                            }
-                            if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= 20) {
-                                //pause.performClick();
-                                if (vibrate) {
-                                    vibrator.cancel();
-                                    vibrator.vibrate(vibrationEffect1);
+                                if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= loading_threshold) {
+                                    lastCommand = commands.POINT_LEFT;
+                                    number.setVisibility(View.INVISIBLE);
+                                    progressBar.setVisibility(View.VISIBLE);
+                                    fist.setVisibility(View.INVISIBLE);
+                                    open_hand.setVisibility(View.INVISIBLE);
+                                    point_left.setVisibility(View.VISIBLE);
+                                    point_right.setVisibility(View.INVISIBLE);
+                                    progressBar.setProgress(Collections.frequency(commandsQueue, commands.POINT_LEFT));
                                 }
-                                stopReading(false);
-                                playbackState = commands.POINT_LEFT;
-                                tts.speak("Select how many chapters you want to get back to", TextToSpeech.QUEUE_FLUSH, null, null);
-                                progressBar.setProgress(0);
-                                progressBar.setMax(35);
-                                commandsQueue.clear();
-                                progressBar.setVisibility(View.INVISIBLE);
-                                point_left.setVisibility(View.INVISIBLE);
-                            }
+                                if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= command_threshold) {
+                                    //pause.performClick();
+                                    if (vibrate) {
+                                        vibrator.cancel();
+                                        vibrator.vibrate(vibrationEffect1);
+                                    }
+                                    stopReading(false);
+                                    playbackState = commands.POINT_LEFT;
+                                    tts.speak("Select how many chapters you want to get back to", TextToSpeech.QUEUE_FLUSH, null, null);
+                                    progressBar.setProgress(0);
+                                    progressBar.setMax(35);
+                                    commandsQueue.clear();
+                                    counter = 0;
+                                    for (int i=0; i < 45; i++) commandsQueue.add(commands.NULL);
+                                    progressBar.setVisibility(View.INVISIBLE);
+                                    point_left.setVisibility(View.INVISIBLE);
+                                }
+
 
                         }
-                    }
-                });
+                    });
 
 
-                //TimeUnit.SECONDS.sleep(3);
-            } else if (hand_is_open) {
-                Log.i(
-                        TAG,
-                        "Hand is OPEN");
-                runOnUiThread(new Runnable() {
+                    //TimeUnit.SECONDS.sleep(3);
+                } else if (hand_is_open && commands.OPEN != playbackState) {
 
-                    @Override
-                    public void run() {
-                        if (commands.OPEN != playbackState) {
+                    Log.i(
+                            TAG,
+                            "Hand is OPEN");
+
+                    runOnUiThread(new Runnable() {
+
+                        @Override
+                        public void run() {
                             commandsQueue.add(0, commands.OPEN);
-                            if (commandsQueue.size() > 30)
-                                commandsQueue.remove(commandsQueue.size() - 1);
-                            if (Collections.frequency(commandsQueue, commands.OPEN) >= 5) {
+                            commandsQueue.remove(commandsQueue.size() - 1);
+                            if (Collections.frequency(commandsQueue, commands.OPEN) >= loading_threshold) {
+                                lastCommand = commands.OPEN;
                                 number.setVisibility(View.INVISIBLE);
                                 progressBar.setVisibility(View.VISIBLE);
                                 fist.setVisibility(View.INVISIBLE);
@@ -868,7 +894,7 @@ public class EpubViewer extends AppCompatActivity {
                                 point_right.setVisibility(View.INVISIBLE);
                                 progressBar.setProgress(Collections.frequency(commandsQueue, commands.OPEN));
                             }
-                            if (Collections.frequency(commandsQueue, commands.OPEN) >= 20) {
+                            if (Collections.frequency(commandsQueue, commands.OPEN) >= command_threshold) {
                                 if (vibrate) {
                                     vibrator.cancel();
                                     vibrator.vibrate(vibrationEffect1);
@@ -879,27 +905,30 @@ public class EpubViewer extends AppCompatActivity {
                                 progressBar.setProgress(0);
                                 progressBar.setMax(20);
                                 commandsQueue.clear();
+                                counter = 0;
+                                for (int i=0; i < 45; i++) commandsQueue.add(commands.NULL);
                                 progressBar.setVisibility(View.INVISIBLE);
                                 open_hand.setVisibility(View.INVISIBLE);
                             }
 
                         }
-                    }
-                });
 
-            } else if (hand_is_closed) {
-                Log.i(
-                        TAG,
-                        "Hand is CLOSED");
-                runOnUiThread(new Runnable() {
+                    });
 
-                    @Override
-                    public void run() {
-                        if (commands.CLOSED != playbackState && playbackState != commands.NULL) {
+                } else if (hand_is_closed && commands.CLOSED != playbackState && playbackState != commands.NULL) {
+
+                    Log.i(
+                            TAG,
+                            "Hand is CLOSED");
+                    runOnUiThread(new Runnable() {
+
+                        @Override
+                        public void run() {
+
                             commandsQueue.add(0, commands.CLOSED);
-                            if (commandsQueue.size() > 30)
-                                commandsQueue.remove(commandsQueue.size() - 1);
-                            if (Collections.frequency(commandsQueue, commands.CLOSED) >= 5){
+                            commandsQueue.remove(commandsQueue.size() - 1);
+                            if (Collections.frequency(commandsQueue, commands.CLOSED) >= loading_threshold){
+                                lastCommand = commands.CLOSED;
                                 number.setVisibility(View.INVISIBLE);
                                 progressBar.setVisibility(View.VISIBLE);
                                 fist.setVisibility(View.VISIBLE);
@@ -908,7 +937,7 @@ public class EpubViewer extends AppCompatActivity {
                                 point_right.setVisibility(View.INVISIBLE);
                                 progressBar.setProgress(Collections.frequency(commandsQueue, commands.CLOSED));
                             }
-                            if (Collections.frequency(commandsQueue, commands.CLOSED) >= 20) {
+                            if (Collections.frequency(commandsQueue, commands.CLOSED) >= command_threshold) {
                                 if (vibrate) {
                                     vibrator.cancel();
                                     vibrator.vibrate(vibrationEffect1);
@@ -918,94 +947,103 @@ public class EpubViewer extends AppCompatActivity {
                                 progressBar.setProgress(0);
                                 progressBar.setMax(20);
                                 commandsQueue.clear();
+                                counter = 0;
+                                for (int i=0; i < 45; i++) commandsQueue.add(commands.NULL);
                                 progressBar.setVisibility(View.INVISIBLE);
                                 fist.setVisibility(View.INVISIBLE);
                             }
 
                         }
-                    }
-                });
 
-            }
-
-
-        } else {
-
-            boolean[] open_fingers =
-                    {is_open(wrist, x_index_start, y_index_start, x_index_tip, y_index_tip, "INDEX", open_threshold - 0.05),
-                            is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE", open_threshold),
-                            is_open(wrist, x_ring_start, y_ring_start, x_ring_tip, y_ring_tip, "RING", open_threshold),
-                            is_open(wrist, x_pinky_start, y_pinky_start, x_pinky_tip, y_pinky_tip, "PINKY", open_threshold)};
-            int sum = 0;
-            for (boolean b : open_fingers) {
-                sum += b ? 1 : 0;
-            }
-
-            System.out.println(sum + " OPEN FINGERS");
-
-            int finalSum = sum;
-            runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    commandsQueue.add(0, num2command.get(finalSum));
-                    if (commandsQueue.size() > 45) commandsQueue.remove(commandsQueue.size() - 1);
-                    if (commandsQueue.size() == 45)
-                        if (Collections.frequency(commandsQueue,num2command.get(finalSum)) > 15){
-                            progressBar.setVisibility(View.VISIBLE);
-                            fist.setVisibility(View.INVISIBLE);
-                            open_hand.setVisibility(View.INVISIBLE);
-                            point_left.setVisibility(View.INVISIBLE);
-                            point_right.setVisibility(View.INVISIBLE);
-                            number.setText(String.valueOf(finalSum));
-                            number.setVisibility(View.VISIBLE);
-                            progressBar.setProgress(Collections.frequency(commandsQueue,num2command.get(finalSum)));
-                        }
-                        if (Collections.frequency(commandsQueue, num2command.get(finalSum)) >= 35) {
-                            if (vibrate) {
-                                vibrator.cancel();
-                                vibrator.vibrate(vibrationEffect1);
-                            }
-
-                            if (playbackState == commands.POINT_RIGHT)
-                                if (pageNumber + finalSum <= pages.size())
-                                    readNextChapter(finalSum);
-                                else readNextChapter(pages.size() - pageNumber - 1);
-                            else if (playbackState == commands.POINT_LEFT)
-                                if (pageNumber - finalSum >= 0) readPreviousChapter(finalSum);
-                                else readPreviousChapter(pageNumber);
-
-
-
-                            commandsQueue.clear();
-                            number.setVisibility(View.INVISIBLE);
-                            progressBar.setVisibility(View.INVISIBLE);
-                            //stop.performClick();
-                            start.performClick();
-                            playbackState = commands.OPEN;
-                            progressBar.setProgress(0);
-                            progressBar.setMax(20);
-                            commandsQueue.clear();
-                        }
+                    });
 
                 }
-            });
-            //playbackState = commands.OPEN;
+                else {
+                    commandsQueue.add(0, commands.NULL);
+                    commandsQueue.remove(commandsQueue.size() - 1);
+                    progressBar.setProgress(Collections.frequency(commandsQueue, lastCommand));
+                }
 
+
+
+            } else {
+
+                boolean[] open_fingers =
+                        {is_open(wrist, x_index_start, y_index_start, x_index_tip, y_index_tip, "INDEX", open_threshold - 0.05),
+                                is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE", open_threshold),
+                                is_open(wrist, x_ring_start, y_ring_start, x_ring_tip, y_ring_tip, "RING", open_threshold),
+                                is_open(wrist, x_pinky_start, y_pinky_start, x_pinky_tip, y_pinky_tip, "PINKY", open_threshold)};
+                int sum = 0;
+                for (boolean b : open_fingers) {
+                    sum += b ? 1 : 0;
+                }
+
+                System.out.println(sum + " OPEN FINGERS");
+                lastCommand = num2command.get(sum);
+                int finalSum = sum;
+                runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        commandsQueue.add(0, num2command.get(finalSum));
+                        commandsQueue.remove(commandsQueue.size() - 1);
+                            if (Collections.frequency(commandsQueue,num2command.get(finalSum)) > loading_threshold){
+                                progressBar.setVisibility(View.VISIBLE);
+                                fist.setVisibility(View.INVISIBLE);
+                                open_hand.setVisibility(View.INVISIBLE);
+                                point_left.setVisibility(View.INVISIBLE);
+                                point_right.setVisibility(View.INVISIBLE);
+                                number.setText(String.valueOf(finalSum));
+                                number.setVisibility(View.VISIBLE);
+                                progressBar.setProgress(Collections.frequency(commandsQueue,num2command.get(finalSum)));
+                            }
+                            if (Collections.frequency(commandsQueue, num2command.get(finalSum)) >= command_threshold) {
+                                if (vibrate) {
+                                    vibrator.cancel();
+                                    vibrator.vibrate(vibrationEffect1);
+                                }
+
+                                if (playbackState == commands.POINT_RIGHT)
+                                    if (pageNumber + finalSum <= pages.size())
+                                        readNextChapter(finalSum);
+                                    else readNextChapter(pages.size() - pageNumber - 1);
+                                else if (playbackState == commands.POINT_LEFT)
+                                    if (pageNumber - finalSum >= 0) readPreviousChapter(finalSum);
+                                    else readPreviousChapter(pageNumber);
+
+
+
+                                commandsQueue.clear();
+                                number.setVisibility(View.INVISIBLE);
+                                progressBar.setVisibility(View.INVISIBLE);
+                                //stop.performClick();
+                                start.performClick();
+                                playbackState = commands.OPEN;
+                                progressBar.setProgress(0);
+                                progressBar.setMax(20);
+                                commandsQueue.clear();
+                                counter = 0;
+                                for (int i=0; i < 45; i++) commandsQueue.add(commands.NULL);
+                            }
+
+                    }
+                });
+                //playbackState = commands.OPEN;
+
+            }
+            if (result.multiHandWorldLandmarks().isEmpty()) {
+                return;
+            }
+            LandmarkProto.Landmark wristWorldLandmark =
+                    result.multiHandWorldLandmarks().get(0).getLandmarkList().get(HandLandmark.WRIST);
+
+            Log.i(
+                    TAG,
+                    String.format(
+                            "MediaPipe Hand wrist world coordinates (in meters with the origin at the hand's"
+                                    + " approximate geometric center): x=%f m, y=%f m, z=%f m",
+                            wristWorldLandmark.getX(), wristWorldLandmark.getY(), wristWorldLandmark.getZ()));
         }
-        if (result.multiHandWorldLandmarks().isEmpty()) {
-            return;
-        }
-        LandmarkProto.Landmark wristWorldLandmark =
-                result.multiHandWorldLandmarks().get(0).getLandmarkList().get(HandLandmark.WRIST);
-
-        Log.i(
-                TAG,
-                String.format(
-                        "MediaPipe Hand wrist world coordinates (in meters with the origin at the hand's"
-                                + " approximate geometric center): x=%f m, y=%f m, z=%f m",
-                        wristWorldLandmark.getX(), wristWorldLandmark.getY(), wristWorldLandmark.getZ()));
-
     }
 
 
