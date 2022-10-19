@@ -835,7 +835,6 @@ public class EpubViewer extends AppCompatActivity {
 
                             @Override
                             public void run() {
-
                                 commandsQueue.add(0, commands.POINT_LEFT);
                                 commandsQueue.remove(commandsQueue.size() - 1);
                                 if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= loading_threshold) {
@@ -1002,7 +1001,7 @@ public class EpubViewer extends AppCompatActivity {
                                     vibrator.cancel();
                                     vibrator.vibrate(vibrationEffect1);
                                 }
-
+                                /*
                                 if (playbackState == commands.POINT_RIGHT)
                                     if (pageNumber + finalSum <= pages.size())
                                         readNextChapter(finalSum);
@@ -1010,8 +1009,11 @@ public class EpubViewer extends AppCompatActivity {
                                 else if (playbackState == commands.POINT_LEFT)
                                     if (pageNumber - finalSum >= 0) readPreviousChapter(finalSum);
                                     else readPreviousChapter(pageNumber);
-
-
+                                */
+                                if (playbackState == commands.POINT_RIGHT)
+                                    gotoNext(finalSum);
+                                else if (playbackState == commands.POINT_LEFT)
+                                    gotoPrevious(finalSum);
 
                                 commandsQueue.clear();
                                 number.setVisibility(View.INVISIBLE);
@@ -1186,11 +1188,9 @@ public class EpubViewer extends AppCompatActivity {
         webViewScrollAmount = 0;
 
         startReading();
-
     }
 
     public void readPreviousChapter(int x) {
-
         pageNumber -= x;
         webView.loadUrl("file://" + pages.get(pageNumber));
         seekBar.setProgress(seekBar.getMax() * pageNumber / pages.size());
