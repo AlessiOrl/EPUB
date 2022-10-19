@@ -503,7 +503,7 @@ public class EpubViewer extends AppCompatActivity {
         rew = findViewById(R.id.FAB_rew);
         final FloatingActionButton[] mediabuttons = {ff, play, pause, stop, rew};
 
-        boolean use_button = sharedPreferences.getBoolean("use_button", false);
+        boolean use_button = sharedPreferences.getBoolean("use_button", true);
         if (use_button) {
             start.setVisibility(View.VISIBLE);
             start.setClickable(true);
@@ -532,12 +532,14 @@ public class EpubViewer extends AppCompatActivity {
             playbackState = commands.NULL;
             stopReading();
         });
+
         play.setOnClickListener(view -> {
             if (use_button) pause.show();
             play.hide();
             playbackState = commands.OPEN;
             resumeReading();
         });
+
         pause.setOnClickListener(view -> {
             if (use_button) play.show();
             pause.hide();
@@ -545,11 +547,13 @@ public class EpubViewer extends AppCompatActivity {
             playbackState = commands.CLOSED;
             pauseReading();
         });
+
         ff.setOnClickListener(view -> {
-            gotoNext();
+            gotoNext(1);
         });
+
         rew.setOnClickListener(view -> {
-            gotoPrevious();
+            gotoPrevious(1);
         });
 
         readingwebView = findViewById(R.id.read_WebView);
@@ -1001,31 +1005,25 @@ public class EpubViewer extends AppCompatActivity {
                                     vibrator.cancel();
                                     vibrator.vibrate(vibrationEffect1);
                                 }
-                                /*
-                                if (playbackState == commands.POINT_RIGHT)
-                                    if (pageNumber + finalSum <= pages.size())
-                                        readNextChapter(finalSum);
-                                    else readNextChapter(pages.size() - pageNumber - 1);
-                                else if (playbackState == commands.POINT_LEFT)
-                                    if (pageNumber - finalSum >= 0) readPreviousChapter(finalSum);
-                                    else readPreviousChapter(pageNumber);
-                                */
-                                if (playbackState == commands.POINT_RIGHT)
-                                    gotoNext(finalSum);
-                                else if (playbackState == commands.POINT_LEFT)
-                                    gotoPrevious(finalSum);
+
 
                                 commandsQueue.clear();
                                 number.setVisibility(View.INVISIBLE);
                                 progressBar.setVisibility(View.INVISIBLE);
                                 //stop.performClick();
-                                start.performClick();
                                 playbackState = commands.OPEN;
                                 progressBar.setProgress(0);
                                 progressBar.setMax(20);
                                 commandsQueue.clear();
                                 counter = 0;
                                 for (int i=0; i < 45; i++) commandsQueue.add(commands.NULL);
+
+
+                                if (playbackState == commands.POINT_RIGHT)
+                                    gotoNext(finalSum);
+                                else if (playbackState == commands.POINT_LEFT)
+                                    gotoPrevious(finalSum);
+
                             }
 
                     }
