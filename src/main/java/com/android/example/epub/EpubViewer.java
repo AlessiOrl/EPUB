@@ -85,7 +85,6 @@ public class EpubViewer extends AppCompatActivity {
     String bookTitle;
     int counter = 10;
     boolean searchViewLongClick = false;
-
     private enum commands {
         NULL,
         OPEN,
@@ -132,6 +131,8 @@ public class EpubViewer extends AppCompatActivity {
 
     Vibrator vibrator;
     VibrationEffect vibrationEffect1;
+
+
 
 
     SeekBar seekBar;
@@ -208,7 +209,7 @@ public class EpubViewer extends AppCompatActivity {
         vibrate = sharedPreferences.getBoolean("vibrateongesture", false);
 
 
-        for (int i = 0; i < 45; i++) commandsQueue.add(commands.NULL);
+        for (int i=0; i < 45; i++) commandsQueue.add(commands.NULL);
         // it is safe to cancel other vibrations currently taking place
 
         if (sharedPreferences.getBoolean("use_gesture", false)) {
@@ -405,6 +406,7 @@ public class EpubViewer extends AppCompatActivity {
         seekBar.setPadding(100, 0, 100, 0);
 
 
+
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int progress;
 
@@ -580,6 +582,7 @@ public class EpubViewer extends AppCompatActivity {
         });
 
 
+
     }
 
     private void startCamera() {
@@ -670,12 +673,12 @@ public class EpubViewer extends AppCompatActivity {
 
     private void logLandmarks(HandsResult result, boolean showPixelValues) throws InterruptedException {
         counter++;
-        if (counter > 10) {
+        if (counter > 10){
 
 
             int loading_threshold = 10;
             int command_threshold = 25;
-            if (Collections.frequency(commandsQueue, lastCommand) < loading_threshold) {
+            if (Collections.frequency(commandsQueue, lastCommand) < loading_threshold){
                 progressBar.setVisibility(View.INVISIBLE);
                 number.setVisibility(View.INVISIBLE);
                 fist.setVisibility(View.INVISIBLE);
@@ -818,7 +821,7 @@ public class EpubViewer extends AppCompatActivity {
                                 progressBar.setVisibility(View.INVISIBLE);
                                 commandsQueue.clear();
                                 counter = 0;
-                                for (int i = 0; i < 45; i++) commandsQueue.add(commands.NULL);
+                                for (int i=0; i < 45; i++) commandsQueue.add(commands.NULL);
                                 point_right.setVisibility(View.INVISIBLE);
                             }
 
@@ -834,37 +837,37 @@ public class EpubViewer extends AppCompatActivity {
 
                     runOnUiThread(new Runnable() {
 
-                        @Override
-                        public void run() {
-                            commandsQueue.add(0, commands.POINT_LEFT);
-                            commandsQueue.remove(commandsQueue.size() - 1);
-                            if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= loading_threshold) {
-                                lastCommand = commands.POINT_LEFT;
-                                number.setVisibility(View.INVISIBLE);
-                                progressBar.setVisibility(View.VISIBLE);
-                                fist.setVisibility(View.INVISIBLE);
-                                open_hand.setVisibility(View.INVISIBLE);
-                                point_left.setVisibility(View.VISIBLE);
-                                point_right.setVisibility(View.INVISIBLE);
-                                progressBar.setProgress(Collections.frequency(commandsQueue, commands.POINT_LEFT));
-                            }
-                            if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= command_threshold) {
-                                //pause.performClick();
-                                if (vibrate) {
-                                    vibrator.cancel();
-                                    vibrator.vibrate(vibrationEffect1);
+                            @Override
+                            public void run() {
+                                commandsQueue.add(0, commands.POINT_LEFT);
+                                commandsQueue.remove(commandsQueue.size() - 1);
+                                if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= loading_threshold) {
+                                    lastCommand = commands.POINT_LEFT;
+                                    number.setVisibility(View.INVISIBLE);
+                                    progressBar.setVisibility(View.VISIBLE);
+                                    fist.setVisibility(View.INVISIBLE);
+                                    open_hand.setVisibility(View.INVISIBLE);
+                                    point_left.setVisibility(View.VISIBLE);
+                                    point_right.setVisibility(View.INVISIBLE);
+                                    progressBar.setProgress(Collections.frequency(commandsQueue, commands.POINT_LEFT));
                                 }
-                                stopReading(false);
-                                playbackState = commands.POINT_LEFT;
-                                tts.speak("Select how many chapters you want to get back to", TextToSpeech.QUEUE_FLUSH, null, null);
-                                progressBar.setProgress(0);
-                                progressBar.setMax(35);
-                                commandsQueue.clear();
-                                counter = 0;
-                                for (int i = 0; i < 45; i++) commandsQueue.add(commands.NULL);
-                                progressBar.setVisibility(View.INVISIBLE);
-                                point_left.setVisibility(View.INVISIBLE);
-                            }
+                                if (Collections.frequency(commandsQueue, commands.POINT_LEFT) >= command_threshold) {
+                                    //pause.performClick();
+                                    if (vibrate) {
+                                        vibrator.cancel();
+                                        vibrator.vibrate(vibrationEffect1);
+                                    }
+                                    stopReading(false);
+                                    playbackState = commands.POINT_LEFT;
+                                    tts.speak("Select how many chapters you want to get back to", TextToSpeech.QUEUE_FLUSH, null, null);
+                                    progressBar.setProgress(0);
+                                    progressBar.setMax(35);
+                                    commandsQueue.clear();
+                                    counter = 0;
+                                    for (int i=0; i < 45; i++) commandsQueue.add(commands.NULL);
+                                    progressBar.setVisibility(View.INVISIBLE);
+                                    point_left.setVisibility(View.INVISIBLE);
+                                }
 
 
                         }
@@ -906,7 +909,7 @@ public class EpubViewer extends AppCompatActivity {
                                 progressBar.setMax(20);
                                 commandsQueue.clear();
                                 counter = 0;
-                                for (int i = 0; i < 45; i++) commandsQueue.add(commands.NULL);
+                                for (int i=0; i < 45; i++) commandsQueue.add(commands.NULL);
                                 progressBar.setVisibility(View.INVISIBLE);
                                 open_hand.setVisibility(View.INVISIBLE);
                             }
@@ -927,7 +930,7 @@ public class EpubViewer extends AppCompatActivity {
 
                             commandsQueue.add(0, commands.CLOSED);
                             commandsQueue.remove(commandsQueue.size() - 1);
-                            if (Collections.frequency(commandsQueue, commands.CLOSED) >= loading_threshold) {
+                            if (Collections.frequency(commandsQueue, commands.CLOSED) >= loading_threshold){
                                 lastCommand = commands.CLOSED;
                                 number.setVisibility(View.INVISIBLE);
                                 progressBar.setVisibility(View.VISIBLE);
@@ -948,7 +951,7 @@ public class EpubViewer extends AppCompatActivity {
                                 progressBar.setMax(20);
                                 commandsQueue.clear();
                                 counter = 0;
-                                for (int i = 0; i < 45; i++) commandsQueue.add(commands.NULL);
+                                for (int i=0; i < 45; i++) commandsQueue.add(commands.NULL);
                                 progressBar.setVisibility(View.INVISIBLE);
                                 fist.setVisibility(View.INVISIBLE);
                             }
@@ -957,11 +960,13 @@ public class EpubViewer extends AppCompatActivity {
 
                     });
 
-                } else {
+                }
+                else {
                     commandsQueue.add(0, commands.NULL);
                     commandsQueue.remove(commandsQueue.size() - 1);
                     progressBar.setProgress(Collections.frequency(commandsQueue, lastCommand));
                 }
+
 
 
             } else {
@@ -985,42 +990,42 @@ public class EpubViewer extends AppCompatActivity {
                     public void run() {
                         commandsQueue.add(0, num2command.get(finalSum));
                         commandsQueue.remove(commandsQueue.size() - 1);
-                        if (Collections.frequency(commandsQueue, num2command.get(finalSum)) > loading_threshold) {
-                            progressBar.setVisibility(View.VISIBLE);
-                            fist.setVisibility(View.INVISIBLE);
-                            open_hand.setVisibility(View.INVISIBLE);
-                            point_left.setVisibility(View.INVISIBLE);
-                            point_right.setVisibility(View.INVISIBLE);
-                            number.setText(String.valueOf(finalSum));
-                            number.setVisibility(View.VISIBLE);
-                            progressBar.setProgress(Collections.frequency(commandsQueue, num2command.get(finalSum)));
-                        }
+                            if (Collections.frequency(commandsQueue,num2command.get(finalSum)) > loading_threshold){
+                                progressBar.setVisibility(View.VISIBLE);
+                                fist.setVisibility(View.INVISIBLE);
+                                open_hand.setVisibility(View.INVISIBLE);
+                                point_left.setVisibility(View.INVISIBLE);
+                                point_right.setVisibility(View.INVISIBLE);
+                                number.setText(String.valueOf(finalSum));
+                                number.setVisibility(View.VISIBLE);
+                                progressBar.setProgress(Collections.frequency(commandsQueue,num2command.get(finalSum)));
+                            }
+                            if (Collections.frequency(commandsQueue, num2command.get(finalSum)) >= command_threshold) {
+                                if (vibrate) {
+                                    vibrator.cancel();
+                                    vibrator.vibrate(vibrationEffect1);
+                                }
 
-                        if (Collections.frequency(commandsQueue, num2command.get(finalSum)) >= command_threshold) {
-                            if (vibrate) {
-                                vibrator.cancel();
-                                vibrator.vibrate(vibrationEffect1);
+
+                                commandsQueue.clear();
+                                number.setVisibility(View.INVISIBLE);
+                                progressBar.setVisibility(View.INVISIBLE);
+                                //stop.performClick();
+                                playbackState = commands.OPEN;
+                                progressBar.setProgress(0);
+                                progressBar.setMax(20);
+                                commandsQueue.clear();
+                                counter = 0;
+                                for (int i=0; i < 45; i++) commandsQueue.add(commands.NULL);
+
+
+                                if (playbackState == commands.POINT_RIGHT)
+                                    gotoNext(finalSum);
+                                else if (playbackState == commands.POINT_LEFT)
+                                    gotoPrevious(finalSum);
+
                             }
 
-                            if (playbackState == commands.POINT_RIGHT)
-                                gotoNext(finalSum);
-                            else if (playbackState == commands.POINT_LEFT)
-                                gotoPrevious(finalSum);
-
-                            commandsQueue.clear();
-                            number.setVisibility(View.INVISIBLE);
-                            progressBar.setVisibility(View.INVISIBLE);
-
-                            playbackState = commands.OPEN;
-                            progressBar.setProgress(0);
-                            progressBar.setMax(20);
-                            commandsQueue.clear();
-                            counter = 0;
-
-                            for (int i = 0; i < 45; i++) commandsQueue.add(commands.NULL);
-
-
-                        }
                     }
                 });
                 //playbackState = commands.OPEN;
@@ -1172,7 +1177,9 @@ public class EpubViewer extends AppCompatActivity {
         this.gotoNext(1);
     }
 
+
     public void readNextChapter(int x) {
+
         pageNumber += x;
         webView.loadUrl("file://" + pages.get(pageNumber));
         seekBar.setProgress(seekBar.getMax() * pageNumber / pages.size());
@@ -1198,6 +1205,7 @@ public class EpubViewer extends AppCompatActivity {
     public void readNextChapter() {
         this.readNextChapter(1);
     }
+
 
     public void highlight_sentence(int x) {
 
