@@ -32,6 +32,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -323,7 +324,6 @@ public class EpubViewer extends AppCompatActivity {
                 return false;
             }
         });
-
         webView.setWebViewClient(new WebViewClient() {
 
             @Override
@@ -550,10 +550,12 @@ public class EpubViewer extends AppCompatActivity {
 
         ff.setOnClickListener(view -> {
             gotoNext();
+            play.performClick();
         });
 
         rew.setOnClickListener(view -> {
             gotoPrevious();
+            play.performClick();
         });
 
         readingwebView = findViewById(R.id.read_WebView);
@@ -644,9 +646,9 @@ public class EpubViewer extends AppCompatActivity {
         double wrist_tip_x = Math.abs(Math.floor((wrist.getX() - x_finger_tip) * 100) / 100);
         double wrist_start_y = Math.abs(Math.floor((wrist.getY() - y_finger_start) * 100) / 100);
         double wrist_tip_y = Math.abs(Math.floor((wrist.getY() - y_finger_tip) * 100) / 100);
-        System.out.println(finger);
-        System.out.println("wrist start x " + wrist_start_x + " wrist tip x " + wrist_tip_x);
-        System.out.println("wrist start y " + wrist_start_y + " wrist tip y " + wrist_tip_y);
+        //em.out.println(finger);
+        //System.out.println("wrist start x " + wrist_start_x + " wrist tip x " + wrist_tip_x);
+        //System.out.println("wrist start y " + wrist_start_y + " wrist tip y " + wrist_tip_y);
         return Math.abs(wrist_tip_x - wrist_start_x) + Math.abs(wrist_tip_y - wrist_start_y) < threshold;
     }
 
@@ -686,14 +688,14 @@ public class EpubViewer extends AppCompatActivity {
                 point_left.setVisibility(View.INVISIBLE);
                 point_right.setVisibility(View.INVISIBLE);
             }
-            System.out.println(playbackState + " LAST COMMAND");
-            System.out.println(playbackState + " PLAYBACK STATE");
-            System.out.println("QUEUE " + commandsQueue);
+            //System.out.println(playbackState + " LAST COMMAND");
+            //System.out.println(playbackState + " PLAYBACK STATE");
+            //System.out.println("QUEUE " + commandsQueue);
             if (result.multiHandLandmarks().isEmpty()) {
                 commandsQueue.add(0, commands.NULL);
                 commandsQueue.remove(commandsQueue.size() - 1);
                 progressBar.setProgress(Collections.frequency(commandsQueue, lastCommand));
-                System.out.println("NO LANDMARKS ");
+                //System.out.println("NO LANDMARKS ");
                 return;
             }
             List<LandmarkProto.NormalizedLandmark> landmarks = result.multiHandLandmarks().get(0).getLandmarkList();
@@ -813,7 +815,6 @@ public class EpubViewer extends AppCompatActivity {
                                     vibrator.cancel();
                                     vibrator.vibrate(vibrationEffect1);
                                 }
-                                stopReading(false);
                                 playbackState = commands.POINT_RIGHT;
                                 tts.speak("Select how many chapters you want to skip", TextToSpeech.QUEUE_FLUSH, null, null);
                                 progressBar.setProgress(0);
@@ -857,7 +858,6 @@ public class EpubViewer extends AppCompatActivity {
                                         vibrator.cancel();
                                         vibrator.vibrate(vibrationEffect1);
                                     }
-                                    stopReading(false);
                                     playbackState = commands.POINT_LEFT;
                                     tts.speak("Select how many chapters you want to get back to", TextToSpeech.QUEUE_FLUSH, null, null);
                                     progressBar.setProgress(0);
@@ -981,7 +981,7 @@ public class EpubViewer extends AppCompatActivity {
                     sum += b ? 1 : 0;
                 }
 
-                System.out.println(sum + " OPEN FINGERS");
+                //System.out.println(sum + " OPEN FINGERS");
                 lastCommand = num2command.get(sum);
                 int finalSum = sum;
                 runOnUiThread(new Runnable() {
@@ -1010,8 +1010,6 @@ public class EpubViewer extends AppCompatActivity {
                                 commandsQueue.clear();
                                 number.setVisibility(View.INVISIBLE);
                                 progressBar.setVisibility(View.INVISIBLE);
-                                //stop.performClick();
-                                playbackState = commands.OPEN;
                                 progressBar.setProgress(0);
                                 progressBar.setMax(20);
                                 commandsQueue.clear();
@@ -1023,6 +1021,8 @@ public class EpubViewer extends AppCompatActivity {
                                     gotoNext(finalSum);
                                 else if (playbackState == commands.POINT_LEFT)
                                     gotoPrevious(finalSum);
+
+                                playbackState = commands.OPEN;
 
                             }
 
@@ -1068,6 +1068,13 @@ public class EpubViewer extends AppCompatActivity {
 
     @Override
     public void onStop() {
+        try {
+            refreshEpub.addCurrentPageScroll(refreshEpub.bookList, path, pageNumber, webView.getScrollY());
+            refreshEpub.addCurrentPageScroll(refreshEpub.customAdapter.searchedBookList, path, pageNumber, webView.getScrollY());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         finish();
         super.onStop();
     }
@@ -1081,7 +1088,7 @@ public class EpubViewer extends AppCompatActivity {
             tts.shutdown();
             Log.d("TTS", "TTS Destroyed");
         }
-        cameraInput.close();
+        if (sharedPreferences.getBoolean("use_gesture", false)) cameraInput.close();
         super.onDestroy();
     }
 
@@ -1127,9 +1134,7 @@ public class EpubViewer extends AppCompatActivity {
     }
 
     public void resumeReading() {
-        if (!tts.isSpeaking()) {
             readcurrent();
-        }
     }
 
     public void stopReading(boolean updatevisibility) {
@@ -1154,9 +1159,7 @@ public class EpubViewer extends AppCompatActivity {
             tts.stop();
         }
         remove_highlight_sentence(lastSentencereaded);
-
         lastSentencereaded += x;
-        readcurrent();
     }
 
     public void gotoPrevious(int x) {
@@ -1164,9 +1167,7 @@ public class EpubViewer extends AppCompatActivity {
             tts.stop();
         }
         remove_highlight_sentence(lastSentencereaded);
-
         lastSentencereaded -= x;
-        readcurrent();
     }
 
     public void gotoPrevious() {
@@ -1181,6 +1182,7 @@ public class EpubViewer extends AppCompatActivity {
     public void readNextChapter(int x) {
 
         pageNumber += x;
+        if (pageNumber >= pages.size()) finish();
         webView.loadUrl("file://" + pages.get(pageNumber));
         seekBar.setProgress(seekBar.getMax() * pageNumber / pages.size());
         webViewScrollAmount = 0;
@@ -1189,7 +1191,7 @@ public class EpubViewer extends AppCompatActivity {
     }
 
     public void readPreviousChapter(int x) {
-        pageNumber -= x;
+        pageNumber = Math.max(pageNumber - x, 0);
         webView.loadUrl("file://" + pages.get(pageNumber));
         seekBar.setProgress(seekBar.getMax() * pageNumber / pages.size());
         webViewScrollAmount = (int) (webView.getContentHeight() * webView.getScale()) - webView.getHeight();
@@ -1197,7 +1199,6 @@ public class EpubViewer extends AppCompatActivity {
 
         startReading();
     }
-
     public void readPreviousChapter() {
         this.readPreviousChapter(1);
     }
@@ -1206,11 +1207,8 @@ public class EpubViewer extends AppCompatActivity {
         this.readNextChapter(1);
     }
 
-
     public void highlight_sentence(int x) {
-
         readingwebView.loadUrl("javascript:highlight_sentence(" + x + ")");
-
     }
 
     public void remove_highlight_sentence(int x) {
