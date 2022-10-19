@@ -1021,7 +1021,7 @@ public class EpubViewer extends AppCompatActivity {
                                     gotoNext(finalSum);
                                 else if (playbackState == commands.POINT_LEFT)
                                     gotoPrevious(finalSum);
-
+                                play.performClick();
                                 playbackState = commands.OPEN;
 
                             }
