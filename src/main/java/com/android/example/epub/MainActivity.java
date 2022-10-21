@@ -255,8 +255,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         checkSharedPreferences();
 
         if  (!sharedPreferences.getBoolean("showed_tutorial", false)) {
-            sharedPreferences.edit().putBoolean("showed_tutorial", true).commit();
-
             Intent intentTutorial = new Intent(context, TutorialActivity.class);
             intentTutorial.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intentTutorial);
