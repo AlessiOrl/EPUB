@@ -237,6 +237,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } catch (IOException e) {
             e.printStackTrace();
         }
+        boolean check;
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         if (sharedPreferences.getBoolean("firstrun", true)) {
             sharedPreferences.edit().putBoolean("keep_screen_on", true).commit();
@@ -248,11 +249,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             sharedPreferences.edit().putBoolean("vibrateongesture", true).commit();
             sharedPreferences.edit().putBoolean("use_button", true).commit();
             sharedPreferences.edit().putBoolean("firstrun", false).commit();
-
-
+            sharedPreferences.edit().putBoolean("showed_tutorial", false).commit();
         }
         checkAutoSync();
         checkSharedPreferences();
+
+        if  (!sharedPreferences.getBoolean("showed_tutorial", false)) {
+            sharedPreferences.edit().putBoolean("showed_tutorial", true).commit();
+
+            Intent intentTutorial = new Intent(context, TutorialActivity.class);
+            intentTutorial.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intentTutorial);
+        }
     }
 
     //Check Shared Preferences

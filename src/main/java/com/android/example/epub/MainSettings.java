@@ -24,7 +24,9 @@ public class MainSettings extends AppCompatActivity {
         context = getApplicationContext();
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+
         sharedPreferences.registerOnSharedPreferenceChangeListener(listener);
+
         if (sharedPreferences.getBoolean("keep_screen_on", false) == true) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         } else {

@@ -2,6 +2,7 @@ package com.android.example.epub;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.widget.ImageView;
 
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,24 +14,24 @@ import java.util.Arrays;
 
 public class TutorialActivity extends AppCompatActivity {
 
-    // ArrayList for person names
-    ArrayList<String> gestureTitles = new ArrayList<>(Arrays.asList("Fist", "Open Hand", "Point Left", "Point Right", "Number 0 to 4"));
-    ArrayList<String> gestureUsage = new ArrayList<>(Arrays.asList("Pause, Cancel skip", "Start, Play, Number 5", "Back X Chapters", "Forward X Chapters", "Thumb Doesn't count in the number count"));
-    ArrayList<Integer> gestureImages = new ArrayList<>(Arrays.asList(R.drawable.fist, R.drawable.open_hand, R.drawable.point_left, R.drawable.point_right, R.drawable.fist));
     Context context;
-    TutorialAdapter customAdapter;
-    RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tutorial);
+        getSupportActionBar().setTitle("Tutorial");
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         context = getApplicationContext();
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
-        recyclerView = (RecyclerView) findViewById(R.id.tutorial_recyclerView);
-        recyclerView.setLayoutManager(linearLayoutManager);
-        customAdapter = new TutorialAdapter(context, gestureTitles, gestureUsage, gestureImages);
-        recyclerView.setAdapter(customAdapter);
 
+        ImageView mImageView;
+        mImageView = (ImageView) findViewById(R.id.tutorial_imageview);
+        mImageView.setImageResource(R.drawable.tutorial_image);
+    }
+    //On Navigation Up
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 }
