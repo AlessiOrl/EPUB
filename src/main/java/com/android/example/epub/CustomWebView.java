@@ -54,6 +54,7 @@ public class CustomWebView extends WebView {
 
     }
 
+
     public MyJavaScriptInterface getMyInterface() {
         return myInterface;
     }

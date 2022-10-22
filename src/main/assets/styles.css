@@ -1,6 +1,6 @@
 :root{
   --bg-color: background-color: #7f5a83;
-background-image: linear-gradient(305deg, #BA68C8 0%, #0D47A1 54%);
+background-image: linear-gradient(315deg, #7f5a83 0%, #0d324d 74%);
   --lyrics-color: white;
   --font-family: "Montserrat",sans-serif;
 }
@@ -38,7 +38,7 @@ html,body{
 }
 #lyrics{
   width: 100%;
-  height: 80vh;
+  height: 85vh;
   color: var(--lyrics-color);
   text-align: center;
   overflow-Y: scroll;
@@ -51,11 +51,11 @@ html,body{
 }
 #lyrics h2{
   opacity: 0.25;
+
 }
 #lyrics .current{
   opacity: 1;
   font-size: 180%;
-  transform: translateY(25%);
 }
 #lyrics .current + h2{
   opacity: 0.35;

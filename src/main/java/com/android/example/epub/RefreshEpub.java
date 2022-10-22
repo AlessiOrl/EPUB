@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
@@ -101,7 +103,7 @@ public class RefreshEpub {
         bitmap = null;
 
         isRemoved(0);
-        FindEpub(Environment.getExternalStorageDirectory());
+        FindEpub(Environment.getExternalStorageDirectory(), 0);
         sortByPreferences(bookList);
 
         writer.close();
@@ -125,12 +127,12 @@ public class RefreshEpub {
             }
         }
     }
-    public void FindEpub(File dir) throws IOException {
+    public void FindEpub(File dir, int depth) throws IOException {
         File listFile[] = dir.listFiles();
-        if (listFile != null) {
+        if (listFile != null && depth <= 4) {
             for (int i = 0; i < listFile.length; i++) {
                 if (listFile[i].isDirectory()) {
-                    FindEpub(listFile[i]);
+                    FindEpub(listFile[i], depth+1);
                 } else {
                     if (listFile[i].getName().endsWith(".epub") || listFile[i].getName().endsWith(".EPUB")) {
                         if (!isExist(listFile[i].getAbsolutePath())) {

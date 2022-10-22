@@ -17,19 +17,10 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.design.widget.NavigationView;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
+import android.provider.Settings;
+
 import android.os.Bundle;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
+
 import android.text.Html;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -38,6 +29,19 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.navigation.NavigationView;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public static int REQUEST_PERMISSIONS = 1;
 
     private static MainActivity instance;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,18 +78,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         navigationView.setNavigationItemSelectedListener(this);
         navigationView.setCheckedItem(R.id.nav_library);
         navigationView.getMenu().getItem(1).setCheckable(false);
-        navigationView.getMenu().getItem(2).setCheckable(false);
-        navigationView.getMenu().getItem(3).setCheckable(false);
-        //navigationView.getMenu().getItem(4).setCheckable(false);
-        //navigationView.getMenu().getItem(5).setCheckable(false);
-        //navigationView.getMenu().getItem(4).setTitle(Html.fromHtml("<font color='#008577'>Komik: Comics Reader</font>"));
-        //navigationView.getMenu().getItem(5).setTitle(Html.fromHtml("<font color='#008577'>Leaf: PDF Reader</font>"));
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
         //RecyclerView
         recyclerView = (RecyclerView) findViewById(R.id.custom_RecylerView);
+
         customAdapter = new CustomAdapter(context, bookList);
         recyclerView.setAdapter(customAdapter);
         if (getFromPreferences("view").equals("viewGrid")) {
@@ -93,17 +93,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             recyclerView.setLayoutManager(new GridLayoutManager(this, 1));
         }
         registerForContextMenu(recyclerView);
-
-        //Check Permission
-        if (!storagePermission()) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSIONS);
+        recyclerView.setAlpha(0);
+        if (!checkPermission()) {
+            requestPermission();
         } else {
             ListBooksNCheckPreferences();
         }
-        
+
+
         //Handle Epub File on Storage
         try {
             Uri uri = getIntent().getData();
+
             if (uri != null) {
                 FindTitle findTitle = new FindTitle();
                 String path = getPath(context, uri);
@@ -123,11 +124,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } catch (Exception e) {
             e.printStackTrace();
         }
+        recyclerView.setAlpha(1);
     }
+
     public static MainActivity getInstance() {
         return instance;
     }
-    
+
     //Convert URI to Actual Path
     public static String getPath(final Context context, final Uri uri) {
 
@@ -190,6 +193,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         return null;
     }
+
     public static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
 
         Cursor cursor = null;
@@ -211,12 +215,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         return null;
     }
+
     public static boolean isExternalStorageDocument(Uri uri) {
         return "com.android.externalstorage.documents".equals(uri.getAuthority());
     }
+
     public static boolean isDownloadsDocument(Uri uri) {
         return "com.android.providers.downloads.documents".equals(uri.getAuthority());
     }
+
     public static boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
@@ -230,6 +237,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } catch (IOException e) {
             e.printStackTrace();
         }
+        boolean check;
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         if (sharedPreferences.getBoolean("firstrun", true)) {
             sharedPreferences.edit().putBoolean("keep_screen_on", true).commit();
@@ -237,10 +245,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             sharedPreferences.edit().putBoolean("rotation_lock", true).commit();
             sharedPreferences.edit().putBoolean("where_i_left", true).commit();
             sharedPreferences.edit().putBoolean("built_in_web_browser", true).commit();
+            sharedPreferences.edit().putBoolean("use_gesture", true).commit();
+            sharedPreferences.edit().putBoolean("vibrateongesture", true).commit();
+            sharedPreferences.edit().putBoolean("use_button", true).commit();
             sharedPreferences.edit().putBoolean("firstrun", false).commit();
+            sharedPreferences.edit().putBoolean("showed_tutorial", false).commit();
         }
         checkAutoSync();
         checkSharedPreferences();
+
+        if  (!sharedPreferences.getBoolean("showed_tutorial", false)) {
+            Intent intentTutorial = new Intent(context, TutorialActivity.class);
+            intentTutorial.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intentTutorial);
+        }
     }
 
     //Check Shared Preferences
@@ -251,6 +269,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             customAdapter.refreshingDone(bookList);
         }
     }
+
     public void checkSharedPreferences() {
         if (sharedPreferences.getBoolean("keep_screen_on", false) == true) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -267,21 +286,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         }
     }
+
     @Override
     protected void onResume() {
         super.onResume();
-        if (storagePermission()) {
+        if (checkPermission()) {
             checkSharedPreferences();
         }
     }
 
+
     //Custom Shared Preferences
     public static final String myPref = "preferenceName";
+
     public String getFromPreferences(String key) {
         SharedPreferences sharedPreferences = getSharedPreferences(myPref, 0);
         String str = sharedPreferences.getString(key, "null");
         return str;
     }
+
     public void setToPreferences(String key, String thePreference) {
         SharedPreferences.Editor editor = getSharedPreferences(myPref, 0).edit();
         editor.putString(key, thePreference);
@@ -300,41 +323,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 intentMainSettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intentMainSettings);
                 break;
-            case R.id.nav_feedback:
-                sendEmail();
+            case R.id.nav_tutorial:
+                Intent intentTutorial = new Intent(context, TutorialActivity.class);
+                intentTutorial.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intentTutorial);
                 break;
-            case R.id.nav_contact:
-                Intent intentContact = new Intent(Intent.ACTION_VIEW, Uri.parse(String.valueOf(R.string.githublink)));
-                startActivity(intentContact);
-                break;
-            /*case R.id.nav_komik:
-                launchApp("com.github.onursert.komik");
-                break;
-            case R.id.nav_leaf:
-                launchApp("com.github.onursert.leaf");
-                break;*/
         }
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
-    private void sendEmail() {
-        Intent intent = new Intent(Intent.ACTION_SENDTO)
-                .setData(new Uri.Builder().scheme("mailto").build())
-                .putExtra(Intent.EXTRA_EMAIL, new String[]{"BookPub <kalashsonker9@gmail.com>"})
-                .putExtra(Intent.EXTRA_SUBJECT, "Feedback")
-                .putExtra(Intent.EXTRA_TEXT, "");
 
-        ComponentName emailApp = intent.resolveActivity(getPackageManager());
-        ComponentName unsupportedAction = ComponentName.unflattenFromString("com.android.fallback/.Fallback");
-        if (emailApp != null && !emailApp.equals(unsupportedAction))
-            try {
-                Intent chooser = Intent.createChooser(intent, "Send email with");
-                startActivity(chooser);
-                return;
-            } catch (ActivityNotFoundException ignored) {
-            }
+    private void sendEmail() {
         Toast.makeText(this, "Couldn't find an email app and account", Toast.LENGTH_LONG).show();
     }
+
     private void launchApp(String packageName) {
         Intent intent = getPackageManager().getLaunchIntentForPackage(packageName);
         if (intent != null) {
@@ -347,6 +349,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             startActivity(intent);
         }
     }
+
     @Override
     public void onBackPressed() {
         if (drawer.isDrawerOpen(GravityCompat.START)) {
@@ -391,6 +394,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
         return true;
     }
+
     //Menu Refresh, Sort, Show/Hide
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -398,7 +402,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             case R.id.refresh:
                 refreshEpub.new refreshBooks().execute();
                 return true;
-                
+
             case R.id.viewList:
                 recyclerView.setLayoutManager(new GridLayoutManager(this, 1));
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -470,7 +474,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         return super.onOptionsItemSelected(item);
     }
+
     Menu mainMenu;
+
     public void whichView(Menu mainMenu) {
         this.mainMenu = mainMenu;
         if (getFromPreferences("view").equals("viewGrid")) {
@@ -482,6 +488,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             mainMenu.findItem(R.id.viewGrid).setTitle(Html.fromHtml("<font color='black'>Grid View (2 Grid)</font>"));
         }
     }
+
     public void whichSort(Menu mainMenu) {
         this.mainMenu = mainMenu;
         if (getFromPreferences("sort").equals("sortAuthor")) {
@@ -507,6 +514,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             mainMenu.findItem(R.id.sortOpenTime).setTitle(Html.fromHtml("<font color='black'>Open Time</font>"));
         }
     }
+
     public void whichShowHide(Menu mainMenu) {
         this.mainMenu = mainMenu;
         if (getFromPreferences("showHideImportTime").equals("Invisible")) {
@@ -532,6 +540,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             inflater.inflate(R.menu.edit_book_context_menu, menu);
         }
     }
+
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -548,15 +557,30 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    //Check Storage Permission
-    public boolean storagePermission() {
-        return (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
+
+    private boolean checkPermission() {
+        return Environment.isExternalStorageManager();
+        //                    checkSharedPreferences();
     }
+
+    private void requestPermission() {
+        try {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+            intent.addCategory("android.intent.category.DEFAULT");
+            intent.setData(Uri.parse(String.format("package:%s", getApplicationContext().getPackageName())));
+            startActivityForResult(intent, 2296);
+        } catch (Exception e) {
+            Intent intent = new Intent();
+            intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+            startActivityForResult(intent, 2296);
+        }
+    }
+
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_PERMISSIONS) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 2296) {
+            if (Environment.isExternalStorageManager()) {
                 ListBooksNCheckPreferences();
             } else {
                 Toast.makeText(context, "Permission is not granted", Toast.LENGTH_LONG).show();
@@ -564,4 +588,5 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         }
     }
+
 }

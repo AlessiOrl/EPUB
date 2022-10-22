@@ -2,8 +2,6 @@ package com.android.example.epub;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +9,9 @@ import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.squareup.picasso.Picasso;
 
@@ -128,6 +129,7 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.MyViewHold
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    if  (!refreshingDoneBool) return;
                     Intent intentEpubViewer = new Intent(context, EpubViewer.class);
                     intentEpubViewer.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intentEpubViewer.putExtra("title", bookList.get(getLayoutPosition()).get(0).toString());

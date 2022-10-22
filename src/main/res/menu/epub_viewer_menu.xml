@@ -195,27 +195,10 @@
     </item>
 
     <item
-        android:id="@+id/highlight"
-        android:icon="@android:drawable/ic_menu_search"
-        android:title="Highlight "
-        app:showAsAction="never">
-        <menu>
-            <group>
-                <item
-                    android:id="@+id/highlighton"
-                    android:title="On" />
-                <item
-                    android:id="@+id/highlightoff"
-                    android:title="Off" />
-            </group>
-        </menu>
-    </item>
-
-    <item
         android:id="@+id/action_search"
         android:icon="@android:drawable/ic_menu_search"
         android:title="Search"
-        app:actionViewClass="android.support.v7.widget.SearchView"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:showAsAction="always" />
     <item
         android:id="@+id/find_next"

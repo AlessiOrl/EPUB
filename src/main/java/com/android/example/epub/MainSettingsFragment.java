@@ -3,8 +3,8 @@ package com.android.example.epub;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v7.preference.Preference;
-import android.support.v7.preference.PreferenceFragmentCompat;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
 
 public class MainSettingsFragment extends PreferenceFragmentCompat {
 
@@ -20,17 +20,7 @@ public class MainSettingsFragment extends PreferenceFragmentCompat {
         preferenceGithub.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(String.valueOf(R.string.githublink)));
-                startActivity(browserIntent);
-                return true;
-            }
-        });
-
-        Preference preferencePicasso = findPreference("picasso");
-        preferencePicasso.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/square/picasso/blob/master/LICENSE.txt"));
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/AlessiOrl"));
                 startActivity(browserIntent);
                 return true;
             }

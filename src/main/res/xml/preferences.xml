@@ -3,34 +3,43 @@
 
     <PreferenceCategory android:title="Settings">
 
-        <android.support.v7.preference.SwitchPreferenceCompat
+        <SwitchPreferenceCompat
             android:defaultValue="true"
             android:key="keep_screen_on"
             android:title="Keep Screen On" />
 
-        <android.support.v7.preference.SwitchPreferenceCompat
-            android:defaultValue="true"
-            android:key="auto_sync"
-            android:title="Auto Sync" />
-
-        <android.support.v7.preference.SwitchPreferenceCompat
+        <SwitchPreferenceCompat
             android:defaultValue="true"
             android:key="rotation_lock"
             android:title="Rotation Lock" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="use_gesture"
+            android:title="Use Hand Gesture" />
+        <SwitchPreferenceCompat
+            android:id="@+id/switchvibrateongesture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="true"
+            android:key="vibrateongesture"
+            android:title="Vibrate On Gesture" />
+        <SwitchPreferenceCompat
+            android:id="@+id/switchPreferenceCompat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="true"
+            android:key="use_button"
+            android:title="Enable Media Buttons" />
 
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Viewer">
 
-        <android.support.v7.preference.SwitchPreferenceCompat
+        <SwitchPreferenceCompat
             android:defaultValue="true"
             android:key="where_i_left"
             android:title="Save Where I Left" />
-        
-        <android.support.v7.preference.SwitchPreferenceCompat
-            android:defaultValue="true"
-            android:key="built_in_web_browser"
-            android:title="Built In Web Browser" />
 
     </PreferenceCategory>
 
@@ -42,16 +51,8 @@
 
         <Preference
             android:key="github"
-            android:summary="github.com/kalash2203"
+            android:summary="https://github.com/AlessiOrl/ReadItForMe"
             android:title="Source" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory android:title="Used Library">
-
-        <Preference
-            android:key="picasso"
-            android:title="Picasso" />
 
     </PreferenceCategory>
 
