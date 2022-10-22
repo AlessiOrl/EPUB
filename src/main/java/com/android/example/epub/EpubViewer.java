@@ -675,7 +675,7 @@ public class EpubViewer extends AppCompatActivity {
 
     private void logLandmarks(HandsResult result, boolean showPixelValues) throws InterruptedException {
         counter++;
-        if (counter > 10){
+        if (counter > 30){
 
 
             int loading_threshold = 10;
