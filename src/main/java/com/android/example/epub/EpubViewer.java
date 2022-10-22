@@ -761,10 +761,10 @@ public class EpubViewer extends AppCompatActivity {
                         is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold) &&
                         is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold) &&
                         is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold);
-                hand_is_closed = y_index_dip > y_index_start &&
-                        y_middle_dip > y_middle_start &&
-                        y_ring_dip > y_ring_start &&
-                        y_pinky_dip > y_pinky_start;
+                hand_is_closed = y_index_dip >= y_index_start-0.1 &&
+                        y_middle_dip >= y_middle_start-0.1 &&
+                        y_ring_dip >= y_ring_start-0.1 &&
+                        y_pinky_dip >= y_pinky_start-0.1;
 
                 boolean hand_is_open = is_open(wrist, x_index_start, y_index_start, x_index_tip, y_index_tip, "INDEX", open_threshold) &&
                         is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE", open_threshold) &&
@@ -772,19 +772,20 @@ public class EpubViewer extends AppCompatActivity {
                         is_open(wrist, x_pinky_start, y_pinky_start, x_pinky_tip, y_pinky_tip, "PINKY", open_threshold);
                 // For Bitmaps, show the pixel values. For texture inputs, show the normalized coordinates.
                 hand_is_open = y_index_dip <= y_index_start &&
-                        y_middle_dip <= y_middle_start &&
-                        y_ring_dip <= y_ring_start &&
-                        y_pinky_dip <= y_pinky_start;
+                        y_middle_dip < y_middle_start &&
+                        y_ring_dip < y_ring_start &&
+                        y_pinky_dip < y_pinky_start;
+
                 boolean forward_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX", 0.2) &&
-                        x_index_start < x_index_tip &&
-                        Math.abs(y_index_start - y_index_tip) < 0.1 &&
+                        x_index_start < x_index_tip-0.3 &&
+                        Math.abs(y_index_start - y_index_tip) < 0.2 &&
                         is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold + 0.3) &&
                         is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold + 0.3) &&
                         is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold + 0.3);
 
                 boolean back_to = is_open(wrist, x_index_start, y_index_start, x_index_dip, y_index_dip, "INDEX", 0.2) &&
-                        x_index_start > x_index_tip &&
-                        Math.abs(y_index_start - y_index_tip) < 0.1 &&
+                        x_index_start > x_index_tip+0.3 &&
+                        Math.abs(y_index_start - y_index_tip) < 0.2 &&
                         is_closed(wrist, x_middle_start, y_middle_start, x_middle_dip, y_middle_dip, "MIDDLE", closed_threshold + 0.3) &&
                         is_closed(wrist, x_ring_start, y_ring_start, x_ring_dip, y_ring_dip, "RING", closed_threshold + 0.3) &&
                         is_closed(wrist, x_pinky_start, y_pinky_start, x_pinky_dip, y_pinky_dip, "PINKY", closed_threshold + 0.3);
@@ -972,10 +973,10 @@ public class EpubViewer extends AppCompatActivity {
             } else {
 
                 boolean[] open_fingers =
-                        {is_open(wrist, x_index_start, y_index_start, x_index_tip, y_index_tip, "INDEX", open_threshold - 0.05),
-                                is_open(wrist, x_middle_start, y_index_start, x_middle_tip, y_middle_tip, "MIDDLE", open_threshold),
-                                is_open(wrist, x_ring_start, y_ring_start, x_ring_tip, y_ring_tip, "RING", open_threshold),
-                                is_open(wrist, x_pinky_start, y_pinky_start, x_pinky_tip, y_pinky_tip, "PINKY", open_threshold)};
+                        {y_index_dip < y_index_start-0.1 ,
+                                y_middle_dip < y_middle_start-0.1,
+                                y_ring_dip < y_ring_start-0.1,
+                                y_pinky_dip < y_pinky_start-0.1};
                 int sum = 0;
                 for (boolean b : open_fingers) {
                     sum += b ? 1 : 0;
@@ -1015,8 +1016,6 @@ public class EpubViewer extends AppCompatActivity {
                                 commandsQueue.clear();
                                 counter = 0;
                                 for (int i=0; i < 45; i++) commandsQueue.add(commands.NULL);
-
-
                                 if (playbackState == commands.POINT_RIGHT)
                                     gotoNext(finalSum);
                                 else if (playbackState == commands.POINT_LEFT)
