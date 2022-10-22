@@ -18,17 +18,16 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-
     }
 }
 
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion 32
     defaultConfig {
         minSdkVersion 30
-        targetSdkVersion 33
+        targetSdkVersion 32
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
     }
