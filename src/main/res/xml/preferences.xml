@@ -5,16 +5,6 @@
 
         <SwitchPreferenceCompat
             android:defaultValue="true"
-            android:key="keep_screen_on"
-            android:title="Keep Screen On" />
-
-        <SwitchPreferenceCompat
-            android:defaultValue="true"
-            android:key="rotation_lock"
-            android:title="Rotation Lock" />
-
-        <SwitchPreferenceCompat
-            android:defaultValue="true"
             android:key="use_gesture"
             android:title="Use Hand Gesture" />
         <SwitchPreferenceCompat
