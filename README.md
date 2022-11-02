@@ -1,4 +1,4 @@
-# BookPub
+# BookPub (ReadMe of the original app)
 
 <h2>BookPub: EPUB Reader (Fast, Lite, Simple, Interactive and Open Source)</h2>
 <ul>
