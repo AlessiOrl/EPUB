@@ -1,25 +1,22 @@
-# BookPub (ReadMe of the original app)
+# BookPub
 
 <h2>BookPub: EPUB Reader (Fast, Lite, Simple, Interactive and Open Source)</h2>
 <ul>
   <li>Very fast book detect and sync (1000 books in approximately 8 seconds)</li>
   <li>Requires low memory space</li>
   <li>User-friendly experience with modern design</li>
-  <li>EPUB 3 multimedia content support (Plays interactive files, videos, audios)</li>
   <li>Runs javascript codes and files in a book</li>
   <li>Open-source project and library (<a href="https://github.com/onursert/bookpub">github.com/onursert/bookpub</a>)</li>
 </ul>
 
 <h3>Settings</h3>
 <ul>
-  <li>Keep screen on when reading</li>
+  <li>Possibiltiy to remove media gestures and gestural interfaced with a single click</li>
   <li>Automatic and fast book sync on startup</li>
-  <li>Rotation lock for portrait and landscape mode</li>
 </ul>
 
 <h3>Library Features</h3>
 <ul>
-  <li>Edit books by changing book title or author</li>
   <li>Delete books from the library or phone memory</li>
   <li>Search books with the book title or author in the library</li>
   <li>View book list with list view (1 grid for vertical orientation) or grid view (2 grid for horizontal orientation or tablets)</li>
